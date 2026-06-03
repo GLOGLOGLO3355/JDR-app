@@ -1,0 +1,34 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0d0b0f;
+  --bg2:       #141018;
+  --bg3:       #1c1624;
+  --border:    #2e2440;
+  --gold:      #c9a84c;
+  --gold2:     #e8c97a;
+  --text:      #e8dfc8;
+  --muted:     #7a6e88;
+  --danger:    #e05c5c;
+  --success:   #5ce0a8;
+  --font-title: 'Cinzel Decorative', serif;
+  --font-body:  'Crimson Pro', serif;
+  --radius:    12px;
+  --shadow:    0 4px 32px rgba(0,0,0,0.6);
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 18px;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+button { cursor: pointer; font-family: var(--font-body); border: none; outline: none; }
+input  { font-family: var(--font-body); outline: none; }
