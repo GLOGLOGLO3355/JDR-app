@@ -4,6 +4,7 @@ import Accueil from './pages/Accueil.jsx'
 import Joueur from './pages/Joueur.jsx'
 import MaitreLogin from './pages/MaitreLogin.jsx'
 import Maitre from './pages/Maitre.jsx'
+import Creation from './pages/Creation.jsx'
 
 export default function App() {
   const [mjConnecte, setMjConnecte] = useState(false)
@@ -11,12 +12,10 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Accueil />} />
+      <Route path="/creation" element={<Creation />} />
       <Route path="/joueur/:id" element={<Joueur />} />
       <Route path="/maitre/login" element={<MaitreLogin onSuccess={() => setMjConnecte(true)} />} />
-      <Route
-        path="/maitre"
-        element={mjConnecte ? <Maitre /> : <Navigate to="/maitre/login" replace />}
-      />
+      <Route path="/maitre" element={mjConnecte ? <Maitre /> : <Navigate to="/maitre/login" replace />} />
     </Routes>
   )
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getState, subscribe } from '../lib/store.js'
+import { getState, subscribe, refresh } from '../lib/store.js'
 
 const styles = {
   page: {
@@ -80,9 +80,12 @@ export default function Accueil() {
 
   useEffect(() => subscribe(s => setPersonnages(s.personnages)), [])
 
+  // Recharge depuis Supabase à chaque fois qu'on arrive sur cette page
+  useEffect(() => { refresh() }, [])
+
   return (
     <div style={styles.page}>
-      <h1 style={styles.title}>Jeu de Rôle trop maxi cool</h1>
+      <h1 style={styles.title}>⚔ JEU DE Rôle super COOL</h1>
       <p style={styles.subtitle}>Choisissez votre personnage pour rejoindre la partie</p>
 
       <div style={styles.grid}>
@@ -109,14 +112,24 @@ export default function Accueil() {
         ))}
       </div>
 
-      <button
-        style={styles.mjBtn}
-        onClick={() => navigate('/maitre/login')}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.color = 'var(--gold)' }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)' }}
-      >
-        🎲 Accès Maître du Jeu
-      </button>
+      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <button
+          style={{ ...styles.mjBtn, borderColor: 'var(--gold)', color: 'var(--gold)' }}
+          onClick={() => navigate('/creation')}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--gold)'; e.currentTarget.style.color = '#000' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gold)' }}
+        >
+          ✦ Créer un personnage
+        </button>
+        <button
+          style={styles.mjBtn}
+          onClick={() => navigate('/maitre/login')}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.color = 'var(--gold)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)' }}
+        >
+          🎲 Accès Maître du Jeu
+        </button>
+      </div>
     </div>
   )
 }
