@@ -120,7 +120,7 @@ function SaisieNom({ classe, onSuivant, onRetour }) {
           value={nom}
           onChange={e => setNom(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && nom.trim() && onSuivant(nom.trim())}
-          placeholder="Ex: Zara la Téméraire..."
+          placeholder="Ex: Kekette l'Intrépide..."
           maxLength={32}
           style={{
             background: 'var(--bg2)', border: `1px solid ${cls.couleur}66`,

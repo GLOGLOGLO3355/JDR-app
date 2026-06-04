@@ -115,11 +115,10 @@ export const STATS_LABELS = {
 
 export const TOTAL_POINTS = 100
 
-// Calcul PV : Défense × 5
+// Calcul PV : Défense + 50
 export function calculerPV(stats) {
-  return stats.defense * 5
+  return stats.defense + 50
 }
-
 // Initialise les stats au minimum de chaque stat pour la classe
 export function statsInitiales(classe) {
   const cfg = CLASSES[classe].stats
