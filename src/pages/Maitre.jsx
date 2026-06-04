@@ -4,7 +4,7 @@ import { getState, subscribe, updatePersonnage, updateAllPersonnages, demanderJe
 import { STATS_CONFIG } from '../lib/supabase.js'
 
 // ── Notification flottante résultat (identique à Joueur.jsx) ─────────────────
-function NotifResultat({ jet, statCfg }) {
+function NotifResultat({ jet, statCfg, avatarJoueur, nomJoueur }) {
   const [visible, setVisible] = useState(true)
   const [fadeout, setFadeout] = useState(false)
 
@@ -30,7 +30,13 @@ function NotifResultat({ jet, statCfg }) {
       boxShadow: `0 0 40px ${couleur}44`,
       animation: fadeout ? 'fadeOut 0.8s ease forwards' : 'slideDown 0.3s ease',
     }}>
-      <div style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: '0.3rem' }}>
+      {avatarJoueur && (
+        <img src={avatarJoueur} alt="avatar"
+          style={{ width: '52px', height: '52px', borderRadius: '50%', objectFit: 'cover', border: `2px solid ${couleur}`, marginBottom: '0.5rem' }}
+        />
+      )}
+      {nomJoueur && <div style={{ fontSize: '0.85rem', color: 'var(--text)', fontWeight: 600, marginBottom: '0.2rem' }}>{nomJoueur}</div>}
+      <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '0.4rem' }}>
         {statCfg.icon} {statCfg.label} — D{jet.faces} · Palier {jet.palier}
       </div>
       <div style={{ fontSize: '3.5rem', fontWeight: 900, color: couleur, lineHeight: 1, marginBottom: '0.3rem' }}>
@@ -326,7 +332,12 @@ export default function Maitre() {
       `}</style>
 
       {/* Notification résultat flottante */}
-      {notifResultat && <NotifResultat jet={notifResultat} statCfg={notifStatCfg} />}
+      {notifResultat && <NotifResultat
+        jet={notifResultat}
+        statCfg={notifStatCfg}
+        avatarJoueur={personnages.find(x => x.id === notifResultat.personnage_id)?.avatar}
+        nomJoueur={personnages.find(x => x.id === notifResultat.personnage_id)?.nom}
+      />}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <h1 style={{ fontFamily: 'var(--font-title)', color: 'var(--gold)', fontSize: '1.1rem' }}>🎲 Maître du Jeu</h1>
