@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getState, subscribe, updatePersonnage, updateAllPersonnages, demanderJet, annulerJet } from '../lib/store.js'
+import { getState, subscribe, updatePersonnage, updateAllPersonnages, demanderJet, annulerJet, accorderBonus, annulerBonus, getValidations, clorerBonusSiTermine } from '../lib/store.js'
 import { STATS_CONFIG } from '../lib/supabase.js'
 
 // ── Notification flottante résultat (identique à Joueur.jsx) ─────────────────
@@ -283,6 +283,7 @@ export default function Maitre() {
   const navigate = useNavigate()
   const [personnages, setPersonnages] = useState(getState().personnages)
   const [jetActif, setJetActif] = useState(getState().jetActif)
+  const [bonusActif, setBonusActif] = useState(getState().bonusActif)
   const [notifResultat, setNotifResultat] = useState(null)
   const [log, setLog] = useState([])
   const [onglet, setOnglet] = useState('joueurs')
@@ -290,6 +291,7 @@ export default function Maitre() {
 
   useEffect(() => subscribe(s => {
     setPersonnages(s.personnages)
+    setBonusActif(s.bonusActif)
     const jet = s.jetActif
     if (jet && jet.statut === 'resolu' && prevJetRef.current?.statut === 'en_attente') {
       setNotifResultat(jet)
@@ -303,7 +305,8 @@ export default function Maitre() {
     import('../lib/store.js').then(m => {
       m.refresh()
       m.refreshJet()
-      const interval = setInterval(() => { m.refresh(); m.refreshJet() }, 2000)
+      m.refreshBonus()
+      const interval = setInterval(() => { m.refresh(); m.refreshJet(); m.refreshBonus() }, 2000)
       return () => clearInterval(interval)
     })
   }, [])
@@ -357,17 +360,30 @@ export default function Maitre() {
       {onglet === 'des' && <OngletDes personnages={personnages} jetActif={jetActif} />}
 
       {onglet === 'global' && (
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.5rem' }}>
-          <h2 style={{ fontFamily: 'var(--font-title)', color: 'var(--gold2)', fontSize: '1rem', marginBottom: '1.2rem' }}>Modifier tous les joueurs</h2>
-          {STATS_CONFIG.map(cfg => <GlobalModif key={cfg.key} cfg={cfg} onApply={(delta) => modifTous(cfg.key, delta)} />)}
-          <div style={{ marginTop: '1.2rem', borderTop: '1px solid var(--border)', paddingTop: '1.2rem' }}>
-            <GlobalModifArgent onApply={(delta) => {
-              const d = parseInt(delta)
-              if (!isNaN(d)) {
-                personnages.forEach(p => updatePersonnage(p.id, { argent: Math.max(0, p.argent + d) }))
-                addLog(`Tous — Argent ${d >= 0 ? '+' : ''}${d}`)
-              }
-            }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {/* Section points bonus */}
+          <div style={{ background: 'var(--bg2)', border: `1px solid ${bonusActif ? 'var(--gold)' : 'var(--border)'}`, borderRadius: 'var(--radius)', padding: '1.5rem' }}>
+            <h2 style={{ fontFamily: 'var(--font-title)', color: 'var(--gold2)', fontSize: '1rem', marginBottom: '1rem' }}>⭐ Points bonus</h2>
+            {bonusActif ? (
+              <BonusActifInfo bonus={bonusActif} personnages={personnages} onAnnuler={annulerBonus} />
+            ) : (
+              <AccorderBonusForm onAccorder={accorderBonus} />
+            )}
+          </div>
+
+          {/* Stats globales */}
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.5rem' }}>
+            <h2 style={{ fontFamily: 'var(--font-title)', color: 'var(--gold2)', fontSize: '1rem', marginBottom: '1.2rem' }}>Modifier tous les joueurs</h2>
+            {STATS_CONFIG.map(cfg => <GlobalModif key={cfg.key} cfg={cfg} onApply={(delta) => modifTous(cfg.key, delta)} />)}
+            <div style={{ marginTop: '1.2rem', borderTop: '1px solid var(--border)', paddingTop: '1.2rem' }}>
+              <GlobalModifArgent onApply={(delta) => {
+                const d = parseInt(delta)
+                if (!isNaN(d)) {
+                  personnages.forEach(p => updatePersonnage(p.id, { argent: Math.max(0, p.argent + d) }))
+                  addLog(`Tous — Argent ${d >= 0 ? '+' : ''}${d}`)
+                }
+              }} />
+            </div>
           </div>
         </div>
       )}
@@ -392,6 +408,85 @@ function GlobalModif({ cfg, onApply }) {
       <span style={{ color: cfg.color, width: '110px', fontSize: '0.9rem' }}>{cfg.icon} {cfg.label}</span>
       <input type="number" placeholder="±" value={val} onChange={e => setVal(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { onApply(val); setVal('') } }} style={{ width: '70px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', padding: '0.3rem 0.5rem', fontSize: '0.9rem' }} />
       <button onClick={() => { onApply(val); setVal('') }} style={{ background: cfg.color, color: '#000', borderRadius: '6px', padding: '0.3rem 0.8rem', fontWeight: 700, fontSize: '0.85rem' }}>Appliquer à tous</button>
+    </div>
+  )
+}
+
+function BonusActifInfo({ bonus, personnages, onAnnuler }) {
+  const [validations, setValidations] = useState([])
+
+  useEffect(() => {
+    getValidations(bonus.id).then(v => {
+      setValidations(v)
+      if (v.length >= personnages.length && personnages.length > 0) {
+        clorerBonusSiTermine(bonus.id, personnages.length)
+      }
+    })
+    const interval = setInterval(() => {
+      getValidations(bonus.id).then(v => {
+        setValidations(v)
+        if (v.length >= personnages.length && personnages.length > 0) {
+          clorerBonusSiTermine(bonus.id, personnages.length)
+        }
+      })
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [bonus.id, personnages.length])
+
+  const tousValides = personnages.length > 0 && validations.length >= personnages.length
+
+  return (
+    <div>
+      <div style={{ color: 'var(--gold)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+        <strong>{bonus.montant} points</strong> accordés
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
+        {personnages.map(p => {
+          const valide = validations.includes(p.id)
+          return (
+            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.85rem' }}>
+              {p.avatar
+                ? <img src={p.avatar} alt="" style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                : <span style={{ fontSize: '1rem' }}>👤</span>
+              }
+              <span style={{ color: valide ? 'var(--success)' : 'var(--muted)', flex: 1 }}>{p.nom}</span>
+              <span style={{ fontWeight: 700 }}>{valide ? '✓' : '⏳'}</span>
+            </div>
+          )
+        })}
+      </div>
+
+      {tousValides ? (
+        <div style={{ color: 'var(--success)', fontSize: '0.85rem', fontStyle: 'italic' }}>
+          ✓ Tous les joueurs ont validé.
+        </div>
+      ) : (
+        <button onClick={onAnnuler}
+          style={{ background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)', borderRadius: '6px', padding: '0.4rem 1rem', fontSize: '0.85rem', cursor: 'pointer' }}>
+          Annuler le bonus
+        </button>
+      )}
+    </div>
+  )
+}
+
+function AccorderBonusForm({ onAccorder }) {
+  const [montant, setMontant] = useState('')
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+      <input
+        type="number" min="1" placeholder="Ex: 5"
+        value={montant} onChange={e => setMontant(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter' && parseInt(montant) > 0) { onAccorder(parseInt(montant)); setMontant('') } }}
+        style={{ width: '90px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', padding: '0.4rem 0.6rem', fontSize: '1rem' }}
+      />
+      <button
+        onClick={() => { if (parseInt(montant) > 0) { onAccorder(parseInt(montant)); setMontant('') } }}
+        disabled={!parseInt(montant) || parseInt(montant) <= 0}
+        style={{ background: parseInt(montant) > 0 ? 'var(--gold)' : 'var(--bg3)', color: parseInt(montant) > 0 ? '#000' : 'var(--muted)', borderRadius: '6px', padding: '0.4rem 1rem', fontWeight: 700, fontSize: '0.9rem', cursor: parseInt(montant) > 0 ? 'pointer' : 'default' }}>
+        ⭐ Accorder à tous
+      </button>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getState, subscribe, lancerJet } from '../lib/store.js'
+import { getState, subscribe, lancerJet, validerBonus, aDejaValide, refreshBonus } from '../lib/store.js'
 import { STATS_CONFIG } from '../lib/supabase.js'
 
 const s = {
@@ -69,8 +69,8 @@ function Particule({ type, x, id }) {
 }
 
 // Bannière de demande de jet (en_attente)
-function BanniereJet({ jet, estConcerne, statCfg, nomJoueur, avatarJoueur, onLancer }) {
-    const [rolling, setRolling] = useState(false)
+function BanniereJet({ jet, estConcerne, statCfg, onLancer }) {
+  const [rolling, setRolling] = useState(false)
 
   async function handleLancer() {
     if (!estConcerne || rolling) return
@@ -86,21 +86,16 @@ function BanniereJet({ jet, estConcerne, statCfg, nomJoueur, avatarJoueur, onLan
       borderRadius: 'var(--radius)', padding: '1rem 1.2rem', marginBottom: '1.2rem',
       animation: 'slideDown 0.3s ease',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
-  {!estConcerne && avatarJoueur && (
-    <img src={avatarJoueur} alt="avatar"
-      style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border)', flexShrink: 0 }}
-    />
-  )}
-  <div>
-    <div style={{ fontFamily: 'var(--font-title)', color: estConcerne ? 'var(--gold)' : 'var(--muted)', fontSize: '0.85rem', marginBottom: '0.3rem' }}>
-      {estConcerne ? '🎲 À toi de lancer !' : `⏳ ${nomJoueur} lance le dé...`}
-    </div>
-    <div style={{ fontSize: '0.9rem', color: 'var(--text)' }}>
-      {statCfg?.icon} {statCfg?.label} — D{jet.faces}
-      <span style={{ color: 'var(--muted)', marginLeft: '0.5rem' }}>· Palier {jet.palier}</span>
-    </div>
-  </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem' }}>
+        <div>
+          <div style={{ fontFamily: 'var(--font-title)', color: estConcerne ? 'var(--gold)' : 'var(--muted)', fontSize: '0.85rem', marginBottom: '0.3rem' }}>
+            {estConcerne ? '🎲 À toi de lancer !' : '⏳ Jet en cours...'}
+          </div>
+          <div style={{ fontSize: '0.9rem', color: 'var(--text)' }}>
+            {statCfg?.icon} {statCfg?.label} — D{jet.faces}
+            <span style={{ color: 'var(--muted)', marginLeft: '0.5rem' }}>· Palier {jet.palier}</span>
+          </div>
+        </div>
         {estConcerne && (
           <button
             onClick={handleLancer}
@@ -169,11 +164,86 @@ function NotifResultat({ jet, statCfg, avatarJoueur, nomJoueur }) {
   )
 }
 
+// ── Répartition des points bonus ──────────────────────────────────────────────
+function BonusRepartition({ bonus, personnage, onValide }) {
+  const [repartition, setRepartition] = useState({})
+  const [saving, setSaving] = useState(false)
+
+  const totalAssigne = Object.values(repartition).reduce((a, b) => a + b, 0)
+  const restants = bonus.montant - totalAssigne
+
+  function ajouterPoint(key) {
+    if (restants <= 0) return
+    setRepartition(r => ({ ...r, [key]: (r[key] || 0) + 1 }))
+  }
+
+  function retirerPoint(key) {
+    if (!repartition[key] || repartition[key] <= 0) return
+    setRepartition(r => ({ ...r, [key]: r[key] - 1 }))
+  }
+
+  async function handleValider() {
+    if (restants !== 0) return
+    setSaving(true)
+    const changements = {}
+    Object.entries(repartition).forEach(([key, val]) => {
+      if (val > 0) changements[key] = personnage[key] + val
+    })
+    await onValide(bonus.id, personnage.id, changements)
+    setSaving(false)
+  }
+
+  return (
+    <div style={{
+      background: 'rgba(201,168,76,0.08)',
+      border: '1px solid var(--gold)',
+      borderRadius: 'var(--radius)', padding: '1rem 1.2rem', marginBottom: '1.2rem',
+      animation: 'slideDown 0.3s ease',
+    }}>
+      <div style={{ fontFamily: 'var(--font-title)', color: 'var(--gold)', fontSize: '0.9rem', marginBottom: '0.3rem' }}>
+        ⭐ {bonus.montant} points bonus à distribuer !
+      </div>
+      <div style={{ color: 'var(--muted)', fontSize: '0.8rem', marginBottom: '1rem' }}>
+        Restants : <strong style={{ color: restants === 0 ? 'var(--success)' : 'var(--gold2)' }}>{restants}</strong>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+        {STATS_CONFIG.map(cfg => (
+          <div key={cfg.key} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <span style={{ color: cfg.color, fontSize: '0.85rem', flex: 1 }}>{cfg.icon} {cfg.label}</span>
+            <span style={{ color: 'var(--muted)', fontSize: '0.8rem', minWidth: '28px', textAlign: 'right' }}>{personnage[cfg.key]}</span>
+            <button onClick={() => retirerPoint(cfg.key)} disabled={!repartition[cfg.key]}
+              style={{ background: 'var(--bg3)', border: '1px solid var(--border)', color: repartition[cfg.key] ? 'var(--text)' : 'var(--border)', borderRadius: '4px', width: '24px', height: '24px', fontSize: '0.9rem', cursor: repartition[cfg.key] ? 'pointer' : 'default' }}>−</button>
+            <span style={{ color: 'var(--gold2)', fontWeight: 700, minWidth: '20px', textAlign: 'center', fontSize: '0.9rem' }}>
+              {repartition[cfg.key] ? `+${repartition[cfg.key]}` : ''}
+            </span>
+            <button onClick={() => ajouterPoint(cfg.key)} disabled={restants <= 0}
+              style={{ background: restants > 0 ? 'var(--gold)' : 'var(--bg3)', border: 'none', color: restants > 0 ? '#000' : 'var(--border)', borderRadius: '4px', width: '24px', height: '24px', fontSize: '0.9rem', cursor: restants > 0 ? 'pointer' : 'default', fontWeight: 700 }}>+</button>
+          </div>
+        ))}
+      </div>
+
+      <button onClick={handleValider} disabled={restants !== 0 || saving}
+        style={{
+          width: '100%', background: restants === 0 ? 'var(--gold)' : 'var(--bg3)',
+          color: restants === 0 ? '#000' : 'var(--muted)',
+          fontFamily: 'var(--font-title)', fontSize: '0.9rem', padding: '0.7rem',
+          borderRadius: 'var(--radius)', fontWeight: 700, cursor: restants === 0 ? 'pointer' : 'default',
+          transition: 'all 0.2s', border: 'none',
+        }}>
+        {saving ? 'Validation...' : restants === 0 ? '✓ Valider la répartition' : `Il reste ${restants} point${restants > 1 ? 's' : ''} à assigner`}
+      </button>
+    </div>
+  )
+}
+
 export default function Joueur() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [personnages, setPersonnages] = useState(getState().personnages)
   const [jetActif, setJetActif] = useState(getState().jetActif)
+  const [bonusActif, setBonusActif] = useState(getState().bonusActif)
+  const [dejaValide, setDejaValide] = useState(false)
   const [notifResultat, setNotifResultat] = useState(null)
   const [particules, setParticules] = useState([])
   const [pageFlash, setPageFlash] = useState(null)
@@ -184,28 +254,34 @@ export default function Joueur() {
   useEffect(() => subscribe(st => {
     setPersonnages(st.personnages)
     const jet = st.jetActif
+    const bonus = st.bonusActif
 
-    // Détecter passage en_attente → resolu
     if (jet && jet.statut === 'resolu' && prevJetRef.current?.statut === 'en_attente') {
       setNotifResultat(jet)
     }
-    // Effacer la notif quand le jet est nettoyé
     if (!jet) setNotifResultat(null)
-
     prevJetRef.current = jet
     setJetActif(jet)
+    setBonusActif(bonus)
   }), [])
 
   useEffect(() => {
     import('../lib/store.js').then(m => {
       m.refresh()
       m.refreshJet()
-      const interval = setInterval(() => { m.refresh(); m.refreshJet() }, 2000)
+      m.refreshBonus()
+      const interval = setInterval(() => { m.refresh(); m.refreshJet(); m.refreshBonus() }, 2000)
       return () => clearInterval(interval)
     })
   }, [])
 
   const p = personnages.find(x => x.id === Number(id))
+
+  // Vérifier en BDD si ce joueur a déjà validé le bonus actif
+  useEffect(() => {
+    if (!bonusActif || !p) { setDejaValide(false); return }
+    aDejaValide(bonusActif.id, p.id).then(setDejaValide)
+  }, [bonusActif?.id, p?.id])
 
   // Détecter changements de PV
   useEffect(() => {
@@ -260,16 +336,31 @@ export default function Joueur() {
         <div style={s.classe}>{p.classe}</div>
       </div>
 
+      {/* Points bonus à distribuer */}
+      {bonusActif && !dejaValide && (
+        <BonusRepartition
+          bonus={bonusActif}
+          personnage={p}
+          onValide={async (bonusId, personnageId, changements) => {
+            await validerBonus(bonusId, personnageId, changements)
+            setDejaValide(true)
+          }}
+        />
+      )}
+      {bonusActif && dejaValide && (
+        <div style={{ background: 'rgba(92,224,168,0.08)', border: '1px solid var(--success)', borderRadius: 'var(--radius)', padding: '0.8rem 1.2rem', marginBottom: '1.2rem', fontSize: '0.9rem', color: 'var(--success)' }}>
+          ✓ Points bonus validés !
+        </div>
+      )}
+
       {/* Bannière jet en attente */}
       {jetActif && jetActif.statut === 'en_attente' && (
         <BanniereJet
           jet={jetActif}
           estConcerne={estConcerne}
           statCfg={jetStatCfg}
-          nomJoueur={personnages.find(x => x.id === jetActif.personnage_id)?.nom}
-          avatarJoueur={personnages.find(x => x.id === jetActif.personnage_id)?.avatar}
           onLancer={lancerJet}
-/>
+        />
       )}
 
       <div style={s.pvCard}>
@@ -288,7 +379,7 @@ export default function Joueur() {
 
       <div style={s.argent}>
         <div>
-          <div style={s.pvLabel}>Stellar</div>
+          <div style={s.pvLabel}>Argent</div>
           <div style={s.argentVal}>🪙 {p.argent}</div>
         </div>
       </div>
@@ -296,16 +387,11 @@ export default function Joueur() {
       <div style={s.statsGrid}>
         {STATS_CONFIG.map(cfg => (
           <div key={cfg.key} style={{ ...s.statCard, border: estConcerne && jetActif?.stat === cfg.key ? `1px solid ${cfg.color}` : '1px solid var(--border)' }}>
-          <div style={s.statHeader}>
-            <span>{cfg.icon}</span>
-            <span>{cfg.label}</span>
-          </div>
-          {cfg.key === 'actions' && (
-            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', fontStyle: 'italic' }}>
-              = {p[cfg.key] / 10} action{p[cfg.key] / 10 > 1 ? 's' : ''}/tour
+            <div style={s.statHeader}>
+              <span>{cfg.icon}</span>
+              <span>{cfg.label}</span>
             </div>
-          )}
-          <div style={{ ...s.statVal, color: cfg.color }}>{p[cfg.key]}</div>
+            <div style={{ ...s.statVal, color: cfg.color }}>{p[cfg.key]}</div>
           </div>
         ))}
       </div>

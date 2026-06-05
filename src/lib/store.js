@@ -2,7 +2,7 @@ import { supabase, PERSONNAGES_INITIAUX } from './supabase.js'
 
 let listeners = []
 let jetListeners = []
-let state = { personnages: [], jetActif: null }
+let state = { personnages: [], jetActif: null, bonusActif: null }
 
 export function getState() { return state }
 
@@ -163,4 +163,106 @@ export async function lancerJet(jetId, faces) {
   const { error } = await supabase.from('jets_de_des').update({ valeur, statut: 'resolu' }).eq('id', jetId)
   if (error) console.error('Erreur lancerJet:', error)
   return valeur
+}
+
+// ── Points bonus ──────────────────────────────────────────────────────────────
+
+function setBonus(bonus) {
+  state = { ...state, bonusActif: bonus }
+  listeners.forEach(fn => fn(state))
+}
+
+export async function refreshBonus() {
+  if (!supabase) return
+  const { data, error } = await supabase
+    .from('points_bonus')
+    .select('*')
+    .eq('statut', 'disponible')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (error) {
+    if (state.bonusActif) setBonus(null)
+    return
+  }
+
+  const prevBonus = state.bonusActif
+  if (!prevBonus || prevBonus.id !== data.id || prevBonus.statut !== data.statut) {
+    setBonus(data)
+  }
+}
+
+// MJ : accorder des points bonus à tous
+export async function accorderBonus(montant) {
+  if (!supabase) return
+  // Clore l'ancien bonus disponible s'il existe
+  await supabase.from('points_bonus').update({ statut: 'termine' }).eq('statut', 'disponible')
+  const { data, error } = await supabase.from('points_bonus').insert([{ montant }]).select().single()
+  if (error) console.error('Erreur accorderBonus:', error)
+  setBonus(data)
+  return data
+}
+
+// MJ : annuler le bonus en cours
+export async function annulerBonus() {
+  if (!supabase) return
+  await supabase.from('points_bonus').update({ statut: 'termine' }).eq('statut', 'disponible')
+  setBonus(null)
+}
+
+// Joueur : valider sa répartition de points
+export async function validerBonus(bonusId, personnageId, changements) {
+  if (!supabase) return
+
+  // Si la défense augmente, recalculer pv_max et pv_actuel
+  const personnage = state.personnages.find(p => p.id === personnageId)
+  if (personnage && changements.defense !== undefined) {
+    const nouvelleDefense = changements.defense
+    const nouveauPvMax = nouvelleDefense + 40
+    const delta = nouveauPvMax - personnage.pv_max
+    changements.pv_max = nouveauPvMax
+    changements.pv_actuel = Math.max(0, personnage.pv_actuel + delta)
+  }
+
+  await supabase.from('personnages')
+    .update({ ...changements, updated_at: new Date().toISOString() })
+    .eq('id', personnageId)
+  await supabase.from('points_bonus_validation').insert([{ bonus_id: bonusId, personnage_id: personnageId }])
+  setState(s => ({
+    ...s,
+    personnages: s.personnages.map(p => p.id === personnageId ? { ...p, ...changements } : p)
+  }))
+}
+
+// Récupérer les IDs des personnages ayant validé un bonus
+export async function getValidations(bonusId) {
+  if (!supabase) return []
+  const { data } = await supabase
+    .from('points_bonus_validation')
+    .select('personnage_id')
+    .eq('bonus_id', bonusId)
+  return data ? data.map(d => d.personnage_id) : []
+}
+
+// Clore le bonus si tout le monde a validé
+export async function clorerBonusSiTermine(bonusId, nombreJoueurs) {
+  if (!supabase) return
+  const validations = await getValidations(bonusId)
+  if (validations.length >= nombreJoueurs) {
+    await supabase.from('points_bonus').update({ statut: 'termine' }).eq('id', bonusId)
+    setBonus(null)
+  }
+}
+
+// Vérifier si un personnage a déjà validé le bonus actif
+export async function aDejaValide(bonusId, personnageId) {
+  if (!supabase) return false
+  const { data } = await supabase
+    .from('points_bonus_validation')
+    .select('*')
+    .eq('bonus_id', bonusId)
+    .eq('personnage_id', personnageId)
+    .single()
+  return !!data
 }
