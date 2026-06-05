@@ -85,24 +85,35 @@ function CarteJoueur({ p, onModif }) {
     const faces = p[cfg.key]
     const valeur = Math.floor(Math.random() * faces) + 1
     setResultat({ valeur, faces, statCfg: cfg })
-    onModif(`${p.nom} — ${cfg.label} (D${faces}) : ${valeur}`)
+    onModif(`${p.nom} — ${cfg.label} (D${faces}) → ${valeur}`)
   }
 
   function appliquerStat(cfg) {
     const d = parseInt(deltaStat)
-    if (!isNaN(d)) updatePersonnage(p.id, { [cfg.key]: Math.max(0, p[cfg.key] + d) })
+    if (!isNaN(d)) {
+      updatePersonnage(p.id, { [cfg.key]: Math.max(0, p[cfg.key] + d) })
+      onModif(`${p.nom} — ${cfg.label} ${d >= 0 ? '+' : ''}${d}`)
+    }
     setEditStat(null); setDeltaStat('')
   }
 
   function appliquerArgent() {
     const d = parseInt(deltaArgent)
-    if (!isNaN(d)) updatePersonnage(p.id, { argent: Math.max(0, p.argent + d) })
+    if (!isNaN(d)) {
+      updatePersonnage(p.id, { argent: Math.max(0, p.argent + d) })
+      onModif(`${p.nom} — Stellars ${d >= 0 ? '+' : ''}${d}`)
+    }
     setEditArgent(false); setDeltaArgent('')
   }
 
   function setPvDirect(v) {
     const n = parseInt(v)
-    if (!isNaN(n)) updatePersonnage(p.id, { pv_actuel: Math.max(0, Math.min(p.pv_max, n)) })
+    if (!isNaN(n)) {
+      const ancien = p.pv_actuel
+      updatePersonnage(p.id, { pv_actuel: Math.max(0, Math.min(p.pv_max, n)) })
+      const delta = Math.max(0, Math.min(p.pv_max, n)) - ancien
+      if (delta !== 0) onModif(`${p.nom} — PV ${delta >= 0 ? '+' : ''}${delta} (→ ${Math.max(0, Math.min(p.pv_max, n))})`)
+    }
   }
 
   const pvPct = Math.max(0, Math.min(100, (p.pv_actuel / p.pv_max) * 100))
@@ -295,6 +306,14 @@ export default function Maitre() {
     const jet = s.jetActif
     if (jet && jet.statut === 'resolu' && prevJetRef.current?.statut === 'en_attente') {
       setNotifResultat(jet)
+      // Logger le résultat du jet
+      const joueur = s.personnages.find(p => p.id === jet.personnage_id)
+      const statCfg = STATS_CONFIG.find(c => c.key === jet.stat)
+      const reussite = jet.valeur >= jet.palier
+      const critique = jet.valeur === jet.faces
+      const echecCrit = jet.valeur === 1
+      const verdict = critique ? '✦ Réussite critique' : echecCrit ? '✗ Échec critique' : reussite ? '✓ Réussite' : '✗ Échec'
+      addLog(`${joueur?.nom} — ${statCfg?.label} D${jet.faces} → ${jet.valeur} (palier ${jet.palier}) — ${verdict}`)
     }
     if (!jet) setNotifResultat(null)
     prevJetRef.current = jet
@@ -365,9 +384,9 @@ export default function Maitre() {
           <div style={{ background: 'var(--bg2)', border: `1px solid ${bonusActif ? 'var(--gold)' : 'var(--border)'}`, borderRadius: 'var(--radius)', padding: '1.5rem' }}>
             <h2 style={{ fontFamily: 'var(--font-title)', color: 'var(--gold2)', fontSize: '1rem', marginBottom: '1rem' }}>⭐ Points bonus</h2>
             {bonusActif ? (
-              <BonusActifInfo bonus={bonusActif} personnages={personnages} onAnnuler={annulerBonus} />
+              <BonusActifInfo bonus={bonusActif} personnages={personnages} onAnnuler={() => { annulerBonus(); addLog('⭐ Bonus annulé par le MJ') }} />
             ) : (
-              <AccorderBonusForm onAccorder={accorderBonus} />
+              <AccorderBonusForm onAccorder={(m) => { accorderBonus(m); addLog(`⭐ ${m} points bonus accordés à tous`) }} />
             )}
           </div>
 
