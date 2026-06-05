@@ -296,11 +296,16 @@ export default function Joueur() {
       <div style={s.statsGrid}>
         {STATS_CONFIG.map(cfg => (
           <div key={cfg.key} style={{ ...s.statCard, border: estConcerne && jetActif?.stat === cfg.key ? `1px solid ${cfg.color}` : '1px solid var(--border)' }}>
-            <div style={s.statHeader}>
-              <span>{cfg.icon}</span>
-              <span>{cfg.label}</span>
+          <div style={s.statHeader}>
+            <span>{cfg.icon}</span>
+            <span>{cfg.label}</span>
+          </div>
+          {cfg.key === 'actions' && (
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', fontStyle: 'italic' }}>
+              = {p[cfg.key] / 10} action{p[cfg.key] / 10 > 1 ? 's' : ''}/tour
             </div>
-            <div style={{ ...s.statVal, color: cfg.color }}>{p[cfg.key]}</div>
+          )}
+          <div style={{ ...s.statVal, color: cfg.color }}>{p[cfg.key]}</div>
           </div>
         ))}
       </div>

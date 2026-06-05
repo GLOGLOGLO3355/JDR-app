@@ -242,7 +242,20 @@ function RepartitionStats({ classe, nom, avatar, onCreer, onRetour }) {
           return (
             <div key={key} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
-                <span style={{ fontSize: '0.9rem' }}>{STATS_LABELS[key].icon} {STATS_LABELS[key].label}</span>
+                <span style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  {STATS_LABELS[key].icon} {STATS_LABELS[key].label}
+                  {key === 'actions' && (
+                    <span style={{ position: 'relative', display: 'inline-block' }}
+                      onMouseEnter={e => e.currentTarget.querySelector('.tooltip').style.display = 'block'}
+                      onMouseLeave={e => e.currentTarget.querySelector('.tooltip').style.display = 'none'}
+                    >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', borderRadius: '50%', background: 'var(--border)', color: 'var(--muted)', fontSize: '0.65rem', cursor: 'default', fontStyle: 'italic', fontWeight: 700 }}>i</span>
+                      <span className="tooltip" style={{ display: 'none', position: 'absolute', left: '50%', bottom: '120%', transform: 'translateX(-50%)', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.5rem 0.7rem', fontSize: '0.75rem', color: 'var(--text)', whiteSpace: 'nowrap', zIndex: 99, boxShadow: '0 4px 16px rgba(0,0,0,0.4)', lineHeight: 1.5 }}>
+                        10 pts = 1 action/tour<br/>20 pts = 2 actions/tour<br/>30 pts = 3 actions/tour<br/>40 pts = 4 actions/tour
+                      </span>
+                    </span>
+                  )}
+                </span>                
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <button onClick={() => changerStat(key, key === 'actions' ? val - 10 : val - 1)} disabled={val <= min}
                     style={{ background: 'var(--bg3)', border: '1px solid var(--border)', color: val <= min ? 'var(--border)' : 'var(--text)', borderRadius: '4px', width: '26px', height: '26px', fontSize: '1rem', cursor: val <= min ? 'default' : 'pointer' }}>−</button>
