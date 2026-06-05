@@ -288,7 +288,7 @@ export default function Joueur() {
 
       <div style={s.argent}>
         <div>
-          <div style={s.pvLabel}>Argent</div>
+          <div style={s.pvLabel}>Stellar</div>
           <div style={s.argentVal}>🪙 {p.argent}</div>
         </div>
       </div>

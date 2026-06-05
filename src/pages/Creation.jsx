@@ -195,6 +195,14 @@ function RepartitionStats({ classe, nom, avatar, onCreer, onRetour }) {
     const nouvelleVal = Math.max(cfg.min, Math.min(cfg.max, valeur))
     const delta = nouvelleVal - stats[key]
     if (delta > 0 && restants - delta < 0) return
+    if (key === 'actions') {
+      const arrondi = Math.round(nouvelleVal / 10) * 10
+      const clamp = Math.max(cfg.min, Math.min(cfg.max, arrondi))
+      const deltaArrondi = clamp - stats[key]
+      if (deltaArrondi > 0 && restants - deltaArrondi < 0) return
+      setStats(s => ({ ...s, [key]: clamp }))
+      return
+    }
     setStats(s => ({ ...s, [key]: nouvelleVal }))
   }
 
@@ -236,10 +244,10 @@ function RepartitionStats({ classe, nom, avatar, onCreer, onRetour }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
                 <span style={{ fontSize: '0.9rem' }}>{STATS_LABELS[key].icon} {STATS_LABELS[key].label}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <button onClick={() => changerStat(key, val - 1)} disabled={val <= min}
+                  <button onClick={() => changerStat(key, key === 'actions' ? val - 10 : val - 1)} disabled={val <= min}
                     style={{ background: 'var(--bg3)', border: '1px solid var(--border)', color: val <= min ? 'var(--border)' : 'var(--text)', borderRadius: '4px', width: '26px', height: '26px', fontSize: '1rem', cursor: val <= min ? 'default' : 'pointer' }}>−</button>
                   <span style={{ fontWeight: 700, fontSize: '1.2rem', color: cls.couleur, minWidth: '2rem', textAlign: 'center' }}>{val}</span>
-                  <button onClick={() => changerStat(key, val + 1)} disabled={val >= max || restants <= 0}
+                  <button onClick={() => changerStat(key, key === 'actions' ? val + 10 : val + 1)} disabled={val >= max || restants <= 0}
                     style={{ background: 'var(--bg3)', border: '1px solid var(--border)', color: (val >= max || restants <= 0) ? 'var(--border)' : 'var(--text)', borderRadius: '4px', width: '26px', height: '26px', fontSize: '1rem', cursor: (val >= max || restants <= 0) ? 'default' : 'pointer' }}>+</button>
                 </div>
               </div>
@@ -249,7 +257,7 @@ function RepartitionStats({ classe, nom, avatar, onCreer, onRetour }) {
                 <div style={{ position: 'absolute', top: '50%', left: 0, width: `${valPct}%`, height: '6px', transform: 'translateY(-50%)', background: cls.couleur, borderRadius: '3px', transition: 'width 0.1s' }} />
                 <div style={{ position: 'absolute', top: '50%', left: `${minPct}%`, transform: 'translate(-50%, -50%)', width: '2px', height: '14px', background: cls.couleur, borderRadius: '1px', opacity: 0.8 }} />
                 <div style={{ position: 'absolute', top: '50%', left: `${maxPct}%`, transform: 'translate(-50%, -50%)', width: '2px', height: '14px', background: cls.couleur, borderRadius: '1px', opacity: 0.8 }} />
-                <input type="range" min={0} max={SLIDER_MAX} value={val} onChange={e => changerStat(key, parseInt(e.target.value))}
+                <input type="range" min={0} max={SLIDER_MAX} value={val}   step={key === 'actions' ? 10 : 1} onChange={e => changerStat(key, parseInt(e.target.value))}
                   style={{ position: 'relative', width: '100%', accentColor: cls.couleur, cursor: 'pointer', background: 'transparent', appearance: 'none', WebkitAppearance: 'none', height: '24px', zIndex: 1 }} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--muted)', marginTop: '0.1rem' }}>
                   <span>0</span>

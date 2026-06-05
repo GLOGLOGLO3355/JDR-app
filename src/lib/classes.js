@@ -4,7 +4,7 @@ export const CLASSES = {
     emoji: '🧑',
     arme: 'Blaster',
     combat: 'À distance longue/moyenne',
-    description: 'Polyvalents et adaptables, maîtres du blaster.',
+    description: 'Pour les big losers qui sont racistes des aliens. A distance comme des petites salopes',
     couleur: '#7ab8f5',
     avatars: [
       '/avatars/Humain/humain.png',
@@ -19,7 +19,7 @@ export const CLASSES = {
       agilite:      { min: 20, max: 40 },
       intelligence: { min: 10, max: 30 },
       charisme:     { min: 10, max: 30 },
-      actions:      { min: 0,  max: 20 },
+      actions:      { min: 10,  max: 20 },
       furtivite:    { min: 10, max: 30 },
       defense:      { min: 0,  max: 20 },
     },
@@ -29,7 +29,7 @@ export const CLASSES = {
     emoji: '🤖',
     arme: 'Sabre laser',
     combat: 'Corps à corps / distance moyenne',
-    description: 'Robots nés d\'une civilisation détruite par leurs propres créations.',
+    description: 'Robots nés d\'une civilisation détruite par leurs propres créations (les robots en gros ils ont pris le dessus genre chatgpt qui nous tue car il y a trop de fétichistes des pieds sur terre).',
     couleur: '#a0d4a0',
     avatars: [
       '/avatars/Klank/Klank.png',
@@ -44,7 +44,7 @@ export const CLASSES = {
       agilite:      { min: 10, max: 30 },
       intelligence: { min: 10, max: 30 },
       charisme:     { min: 0,  max: 20 },
-      actions:      { min: 0,  max: 20 },
+      actions:      { min: 10,  max: 20 },
       furtivite:    { min: 0,  max: 20 },
       defense:      { min: 10, max: 30 },
     },
@@ -54,7 +54,7 @@ export const CLASSES = {
     emoji: '🪰',
     arme: 'Lance',
     combat: 'Corps à corps, voltigeur',
-    description: 'Aliens ailés fiers de leurs ailes — que tout le monde moque.',
+    description: 'Aliens ailés fiers de leurs ailes mais tout le monde se fout de leur gueule vu qu\'ils volent genre 2 metres. Ils sont super rapides et font des attaques éclairs, mais sont fragiles et pas très forts.',
     couleur: '#d4a0d4',
     avatars: [
       '/avatars/Mush/Mush.png',
@@ -68,7 +68,7 @@ export const CLASSES = {
       force:        { min: 10, max: 30 },
       agilite:      { min: 10, max: 30 },
       intelligence: { min: 0,  max: 20 },
-      charisme:     { min: 0,  max: 20 },
+      charisme:     { min: 10,  max: 20 },
       actions:      { min: 20, max: 40 },
       furtivite:    { min: 10, max: 30 },
       defense:      { min: 0,  max: 20 },
@@ -79,7 +79,7 @@ export const CLASSES = {
     emoji: '💢',
     arme: 'Poings',
     combat: 'Corps à corps brutal',
-    description: 'Vivent pour la bagarre. L\'intelligence est optionnelle.',
+    description: 'Ils portent bien leur nom: ils vivent pour la bagarre, mais l\'intelligence est optionnelle. Oscar?',
     couleur: '#e07070',
     avatars: [
       '/avatars/Trysault/Trysault.png',
@@ -94,7 +94,7 @@ export const CLASSES = {
       agilite:      { min: 10, max: 30 },
       intelligence: { min: 0,  max: 20 },
       charisme:     { min: 10, max: 30 },
-      actions:      { min: 0,  max: 20 },
+      actions:      { min: 10,  max: 20 },
       furtivite:    { min: 0,  max: 20 },
       defense:      { min: 10, max: 30 },
     },
@@ -104,7 +104,7 @@ export const CLASSES = {
     emoji: '🐙',
     arme: 'Psychique',
     combat: 'À distance, magie',
-    description: 'Pieuvres aux pouvoirs psychiques redoutables.',
+    description: 'Pieuvres aux pouvoirs psychiques. Rien avoir avec les poulpes aux tentacules des series cochonnes japonaises.',
     couleur: '#8a7fff',
     avatars: [
       '/avatars/Cthulu/Cthulu.png',
@@ -128,7 +128,7 @@ export const CLASSES = {
     emoji: '🌀',
     arme: 'Couteau',
     combat: 'Corps à corps discret',
-    description: 'Furtifs et charismatiques, mais fragiles au combat direct.',
+    description: 'Furtifs et charismatiques, mais fragiles au combat direct. Ils peuvent se transformer en n\'importe quelle forme et s\'infiltrer partout, mais ils ne vont pas se transformer en femme sexy et coquine pour vous car ils sont complètement asexués (triste).',
     couleur: '#5ce0b8',
     avatars: [
       '/avatars/Metamorphes/Metamorphe.png',
@@ -143,7 +143,7 @@ export const CLASSES = {
       agilite:      { min: 10, max: 30 },
       intelligence: { min: 0,  max: 20 },
       charisme:     { min: 10, max: 30 },
-      actions:      { min: 0,  max: 20 },
+      actions:      { min: 10,  max: 20 },
       furtivite:    { min: 20, max: 40 },
       defense:      { min: 10, max: 30 },
     },
@@ -155,16 +155,16 @@ export const STATS_LABELS = {
   agilite:      { label: 'Agilité',      icon: '🌪️' },
   intelligence: { label: 'Intelligence', icon: '✨' },
   charisme:     { label: 'Charisme',     icon: '👑' },
-  actions:      { label: 'Actions',      icon: '⚡' },
+  actions:      { label: 'Actions (10 en 10)', icon: '⚡' },
   furtivite:    { label: 'Furtivité',    icon: '🌑' },
   defense:      { label: 'Défense',      icon: '🛡️' },
 }
 
-export const TOTAL_POINTS = 100
+export const TOTAL_POINTS = 110
 
-// Calcul PV : Défense × 5
+// Calcul PV : Défense + 50;
 export function calculerPV(stats) {
-  return stats.defense * 5
+  return stats.defense*2 + 30
 }
 
 // Initialise les stats au minimum de chaque stat pour la classe
