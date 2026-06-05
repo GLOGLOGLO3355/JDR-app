@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getState, subscribe, lancerJet, validerBonus, aDejaValide, refreshBonus } from '../lib/store.js'
 import { STATS_CONFIG } from '../lib/supabase.js'
+import { CLASSES, COMPETENCES } from '../lib/classes.js'
 
 const s = {
   page: { minHeight: '100vh', background: 'radial-gradient(ellipse at 50% -20%, #1a0f2e 0%, #0d0b0f 60%)', padding: '1.5rem', maxWidth: '500px', margin: '0 auto', position: 'relative', overflow: 'hidden' },
@@ -278,10 +279,10 @@ export default function Joueur() {
   const p = personnages.find(x => x.id === Number(id))
 
   // Vérifier en BDD si ce joueur a déjà validé le bonus actif
-  useEffect(() => {
-    if (!bonusActif || !p) { setDejaValide(false); return }
-    aDejaValide(bonusActif.id, p.id).then(setDejaValide)
-  }, [bonusActif?.id, p?.id])
+useEffect(() => {
+  if (!bonusActif || !p) { setDejaValide(false); return }
+  aDejaValide(bonusActif.id, p.id).then(setDejaValide)
+}, [bonusActif, p?.id])
 
   // Détecter changements de PV
   useEffect(() => {
@@ -395,6 +396,50 @@ export default function Joueur() {
           </div>
         ))}
       </div>
+
+      {/* Compétences */}
+      {(() => {
+        const classeKey = Object.keys(CLASSES).find(k => CLASSES[k].nom === p.classe) || p.classe
+        const competences = COMPETENCES[classeKey]
+        const couleurClasse = CLASSES[classeKey]?.couleur || 'var(--gold)'
+        if (!competences) return null
+        return (
+          <div style={{ marginTop: '1.5rem' }}>
+            <div style={{ fontFamily: 'var(--font-title)', color: 'var(--muted)', fontSize: '0.75rem', letterSpacing: '0.1em', marginBottom: '0.8rem', textTransform: 'uppercase' }}>
+              Compétences
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+              {competences.map((comp, i) => (
+                <div key={i} style={{
+                  background: comp.locked ? 'var(--bg2)' : 'var(--bg2)',
+                  border: `1px solid ${comp.locked ? 'var(--border)' : couleurClasse + '55'}`,
+                  borderRadius: 'var(--radius)',
+                  padding: '0.9rem 1rem',
+                  opacity: comp.locked ? 0.5 : 1,
+                  filter: comp.locked ? 'grayscale(1)' : 'none',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: comp.locked ? 0 : '0.4rem' }}>
+                    <span style={{ fontSize: '1.1rem' }}>{comp.icone}</span>
+                    <span style={{ fontFamily: 'var(--font-title)', color: comp.locked ? 'var(--muted)' : couleurClasse, fontSize: '0.85rem' }}>
+                      {comp.nom}
+                    </span>
+                    {comp.seuil && !comp.locked && (
+                      <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--muted)', fontStyle: 'italic' }}>
+                        {comp.seuil}
+                      </span>
+                    )}
+                  </div>
+                  {!comp.locked && (
+                    <div style={{ fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.5, opacity: 0.85 }}>
+                      {comp.description}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

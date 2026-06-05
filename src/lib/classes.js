@@ -180,3 +180,96 @@ export function pointsRestants(stats, classe) {
   const total = Object.values(stats).reduce((a, b) => a + b, 0)
   return TOTAL_POINTS - total
 }
+
+export const COMPETENCES = {
+  Humain: [
+    {
+      nom: 'Tirs à répétition',
+      icone: '🔫',
+      description: 'Si réussi, le dernier chiffre du roll × 2 = dégâts. Ex : roll 23 → 3×2 = 6 dégâts.',
+      seuil: 'Seuil : 10 Agilité',
+    },
+    {
+      nom: 'Headshot',
+      icone: '🎯',
+      description: 'Inflige 10 dégâts à coup sûr, sans lancer de dé.',
+      seuil: 'Seuil : 10 Agilité',
+    },
+    { nom: '???', icone: '🔒', description: '', seuil: '', locked: true },
+  ],
+  Klank: [
+    {
+      nom: 'Entaille',
+      icone: '⚔️',
+      description: 'Inflige 15 dégâts à coup sûr, sans lancer de dé.',
+      seuil: 'Seuil : 10 Force',
+    },
+    {
+      nom: 'Voltage Max',
+      icone: '⚡',
+      description: 'Ajoute 15 dégâts bonus à ta prochaine attaque.',
+      seuil: 'Seuil : 15 Agilité',
+    },
+    { nom: '???', icone: '🔒', description: '', seuil: '', locked: true },
+  ],
+  Mush: [
+    {
+      nom: 'Saignement',
+      icone: '🩸',
+      description: 'Inflige 3 dégâts par tour pendant 2 tours. Utilisable plusieurs fois dans le même tour, les effets se cumulent.',
+      seuil: 'Seuil : 15 Actions',
+    },
+    {
+      nom: 'Bloodlust',
+      icone: '🦟',
+      description: 'Suce un ennemi qui saigne et récupère 20 PV. Coûte 1 seule action.',
+      seuil: 'Seuil : 15 Furtivité',
+    },
+    { nom: '???', icone: '🔒', description: '', seuil: '', locked: true },
+  ],
+  Trysault: [
+    {
+      nom: 'Hurlement',
+      icone: '😤',
+      description: 'Attire l\'attention d\'un ennemi et le force à t\'attaquer en priorité.',
+      seuil: 'Seuil : 15 Défense',
+    },
+    {
+      nom: 'Coup de boule',
+      icone: '💢',
+      description: 'Inflige 20 dégâts à un ennemi, mais tu perds 5 PV dans le choc.',
+      seuil: 'Seuil : 10 Force',
+    },
+    { nom: '???', icone: '🔒', description: '', seuil: '', locked: true },
+  ],
+  Cthulu: [
+    {
+      nom: 'Onde psychique',
+      icone: '🐙',
+      description: 'Inflige 8 dégâts à tous les ennemis présents sur le terrain simultanément.',
+      seuil: 'Seuil : 10 Intelligence',
+    },
+    {
+      nom: 'Bisou magique',
+      icone: '💋',
+      description: 'Soigne une personne de 15 PV si réussi. Si raté, la cible perd 5 PV.',
+      seuil: 'Seuil : 10 Charisme',
+    },
+    { nom: '???', icone: '🔒', description: '', seuil: '', locked: true },
+  ],
+  Metamorphe: [
+    {
+      nom: 'Rat',
+      icone: '🐀',
+      description: 'Vole des Stellars à un adversaire. Si réussi, dernier chiffre du roll × 3 = Stellars volés. Ex : roll 23 → 3×3 = 9 Stellars.',
+      seuil: 'Seuil : 10 Agilité',
+    },
+    {
+      nom: 'Charmeur',
+      icone: '🎭',
+      description: 'Tu te transformes en une connaissance de l\'ennemi et engages la conversation, le distrayant et l\'incapacitant jusqu\'à sa mort ou jusqu\'à ce que tu décides de stopper.',
+      seuil: 'Seuil : 15 Charisme',
+    },
+    { nom: '???', icone: '🔒', description: '', seuil: '', locked: true },
+  ],
+}
