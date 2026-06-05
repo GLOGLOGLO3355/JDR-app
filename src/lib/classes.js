@@ -192,7 +192,7 @@ export const COMPETENCES = {
     {
       nom: 'Headshot',
       icone: '🎯',
-      description: 'Inflige 10 dégâts à coup sûr, sans lancer de dé.',
+      description: 'Inflige 10 dégâts à un ennemi.',
       seuil: 'Seuil : 10 Agilité',
     },
     { nom: '???', icone: '🔒', description: '', seuil: '', locked: true },
@@ -201,7 +201,7 @@ export const COMPETENCES = {
     {
       nom: 'Entaille',
       icone: '⚔️',
-      description: 'Inflige 15 dégâts à coup sûr, sans lancer de dé.',
+      description: 'Inflige 15 dégâts à un ennemi.',
       seuil: 'Seuil : 10 Force',
     },
     {
