@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F10-N — Dossier Escadron</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600&display=swap');
+  :root{--bg:#050810;--panel:#0a0f1e;--border:#1a2a4a;--accent:#00c8ff;--accent2:#ff4060;--accent3:#ffe040;--text:#c8d8f0;--muted:#5a7090;--glow:0 0 18px rgba(0,200,255,0.35);--glow2:0 0 18px rgba(255,64,96,0.35)}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:16px;line-height:1.6;min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(1px 1px at 10% 15%,rgba(255,255,255,0.6) 0%,transparent 100%),radial-gradient(1px 1px at 30% 40%,rgba(255,255,255,0.4) 0%,transparent 100%),radial-gradient(1px 1px at 55% 10%,rgba(255,255,255,0.5) 0%,transparent 100%),radial-gradient(1px 1px at 80% 60%,rgba(255,255,255,0.3) 0%,transparent 100%),radial-gradient(1px 1px at 20% 80%,rgba(255,255,255,0.5) 0%,transparent 100%),radial-gradient(2px 2px at 75% 35%,rgba(0,200,255,0.4) 0%,transparent 100%),radial-gradient(2px 2px at 15% 65%,rgba(255,64,96,0.3) 0%,transparent 100%);pointer-events:none;z-index:0}
+  .container{max-width:900px;margin:0 auto;padding:40px 20px 80px;position:relative;z-index:1}
+  .header{text-align:center;margin-bottom:60px;position:relative}
+  .header::before,.header::after{content:'';display:block;width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:pulse-line 3s ease-in-out infinite}
+  .header::before{margin-bottom:30px}
+  .header::after{margin-top:30px}
+  @keyframes pulse-line{0%,100%{opacity:0.4}50%{opacity:1}}
+  .classified-tag{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent2);letter-spacing:4px;text-transform:uppercase;margin-bottom:12px;animation:blink 2s step-end infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  .title-main{font-family:'Orbitron',monospace;font-size:clamp(52px,10vw,96px);font-weight:900;letter-spacing:8px;color:#fff;text-shadow:0 0 30px var(--accent),0 0 60px rgba(0,200,255,0.2);line-height:1}
+  .title-sub{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:6px;margin-top:10px}
+  .stellar-badge{display:inline-block;margin-top:20px;background:linear-gradient(135deg,var(--accent3),#ff8c00);color:#000;font-family:'Orbitron',monospace;font-size:12px;font-weight:700;padding:5px 16px;letter-spacing:3px;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%)}
+  .section{margin-bottom:50px}
+  .section-title{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--accent);letter-spacing:5px;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:12px}
+  .section-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+  .panel{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--accent);padding:24px 28px;position:relative;margin-bottom:16px}
+  .panel::before{content:'';position:absolute;top:0;right:0;width:40px;height:40px;border-top:1px solid var(--accent);border-right:1px solid var(--accent)}
+  .panel-title{font-family:'Orbitron',monospace;font-size:11px;color:var(--muted);letter-spacing:3px;margin-bottom:10px;text-transform:uppercase}
+  .panel p{font-size:15px;color:var(--text);font-weight:300}
+  .garmin-block{background:linear-gradient(135deg,#070d1a,#0d1a2e);border:1px solid var(--accent);padding:28px;position:relative;box-shadow:var(--glow),inset 0 0 30px rgba(0,200,255,0.03);margin-bottom:16px}
+  .garmin-block::before{content:'IA ACTIVE';position:absolute;top:-10px;left:20px;background:var(--accent);color:#000;font-family:'Share Tech Mono',monospace;font-size:10px;padding:2px 10px;letter-spacing:2px;font-weight:bold}
+  .garmin-name{font-family:'Orbitron',monospace;font-size:28px;font-weight:900;color:var(--accent);text-shadow:var(--glow);margin-bottom:6px}
+  .garmin-block p{font-size:15px;color:var(--text);font-weight:300}
+  .races-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+  .race-card{background:var(--panel);border:1px solid var(--border);padding:22px;position:relative;transition:border-color 0.2s,box-shadow 0.2s;overflow:hidden}
+  .race-card::before{content:'';position:absolute;bottom:0;right:0;width:50px;height:50px;border-bottom:1px solid var(--accent);border-right:1px solid var(--accent);opacity:0.4}
+  .race-card:hover{border-color:var(--accent);box-shadow:var(--glow)}
+  .race-icon{font-size:32px;margin-bottom:10px;display:block;filter:drop-shadow(0 0 6px rgba(0,200,255,0.4))}
+  .race-name{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}
+  .race-motto{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent2);letter-spacing:2px;margin-bottom:10px;text-transform:uppercase}
+  .race-desc{font-size:13.5px;color:var(--text);font-weight:300;line-height:1.55}
+  .race-stats{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px}
+  .stat-tag{font-family:'Share Tech Mono',monospace;font-size:10px;padding:2px 8px;border:1px solid;letter-spacing:1px}
+  .stat-plus{border-color:#00ff88;color:#00ff88}
+  .stat-minus{border-color:var(--accent2);color:var(--accent2)}
+  .dice-block{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--accent3);padding:28px;position:relative}
+  .dice-block::before{content:'';position:absolute;top:0;right:0;width:40px;height:40px;border-top:1px solid var(--accent3);border-right:1px solid var(--accent3)}
+  .flow-step{display:flex;gap:16px;align-items:flex-start;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+  .flow-step:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+  .step-num{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;color:var(--accent3);min-width:36px;text-shadow:0 0 10px rgba(255,224,64,0.5);line-height:1;padding-top:2px}
+  .step-content h4{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--accent3);letter-spacing:2px;margin-bottom:6px;text-transform:uppercase}
+  .step-content p{font-size:14px;color:var(--text);font-weight:300;line-height:1.6}
+  .example-box{margin-top:10px;background:rgba(255,224,64,0.05);border:1px solid rgba(255,224,64,0.2);padding:12px 16px;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--accent3);line-height:1.8}
+  .stellar-block{display:flex;align-items:center;gap:20px;background:linear-gradient(135deg,#0d1200,#1a1f00);border:1px solid rgba(255,224,64,0.3);padding:20px 24px;box-shadow:0 0 20px rgba(255,224,64,0.08)}
+  .stellar-coin{width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe040,#c87000);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:16px;font-weight:900;color:#000;flex-shrink:0;box-shadow:0 0 20px rgba(255,224,64,0.4)}
+  .stellar-text h3{font-family:'Orbitron',monospace;font-size:18px;font-weight:900;color:var(--accent3);margin-bottom:4px}
+  .stellar-text p{font-size:14px;color:var(--text);font-weight:300}
+  .warning-band{background:repeating-linear-gradient(-45deg,rgba(255,64,96,0.08),rgba(255,64,96,0.08) 10px,transparent 10px,transparent 20px);border:1px solid rgba(255,64,96,0.4);padding:20px 24px;border-left:3px solid var(--accent2);box-shadow:var(--glow2);margin-bottom:16px}
+  .warning-band .warn-title{font-family:'Orbitron',monospace;font-size:13px;font-weight:900;color:var(--accent2);letter-spacing:4px;margin-bottom:8px;text-transform:uppercase}
+  .warning-band p{font-size:14px;color:var(--text);font-weight:300}
+  .footer{text-align:center;margin-top:60px;padding-top:30px;border-top:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:3px}
+  /* CTA */
+  .cta-block{text-align:center;margin-top:60px;padding:40px 20px;border-top:1px solid var(--border)}
+  .cta-label{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:4px;text-transform:uppercase;margin-bottom:20px}
+  .cta-btn{display:inline-block;font-family:'Orbitron',monospace;font-size:14px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#000;background:linear-gradient(135deg,var(--accent3),#ff8c00);padding:16px 40px;text-decoration:none;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:opacity 0.2s,box-shadow 0.2s;box-shadow:0 0 20px rgba(255,224,64,0.3)}
+  .cta-btn:hover{opacity:0.9;box-shadow:0 0 40px rgba(255,224,64,0.5)}
+  .back-link{display:inline-block;margin-top:16px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:2px;transition:color 0.2s}
+  .back-link:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="header">
+    <div class="classified-tag">⚠ COOPÉRATION SPATIALE — DOCUMENT INTERNE ⚠</div>
+    <div class="title-main">F10-N</div>
+    <div class="title-sub">ESCADRON • DOSSIER D'INTÉGRATION • NIVEAU 0</div>
+    <div class="stellar-badge">★ STELLAR CURRENCY ZONE ★</div>
+  </header>
+
+  <section class="section">
+    <div class="section-title">// 01 — L'UNIVERS</div>
+    <div class="panel">
+      <div class="panel-title">Contexte général</div>
+      <p>Quelque part dans les confins de l'espace connu, la <strong>Coopération Spatiale</strong> règne en maître sur des dizaines de systèmes colonisés. Des humains, des aliens, des machines — tout ce beau monde cohabite, souvent mal. La monnaie qui fait tourner ce joyeux bordel : le <strong>STELLAR</strong>.</p>
+    </div>
+    <div class="warning-band">
+      <div class="warn-title">⚠ ESCADRON F10-N — STATUT : PARIAS OFFICIELS</div>
+      <p>Vous faites partie de l'escadron <strong>F10-N</strong> : les rejetés, les bons à rien, les indésirables que personne ne voulait ailleurs. La Coopération Spatiale a eu une idée de génie — plutôt que de vous virer, elle vous envoie en <strong>missions suicides</strong> sur des planètes que personne d'autre n'ose approcher. Felicitations. Vous êtes utiles, pour une fois.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">// 02 — GARMIN, VOTRE CAPITAINE</div>
+    <div class="garmin-block">
+      <div class="garmin-name">G.A.R.M.I.N</div>
+      <p style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:14px;">INTELLIGENCE ARTIFICIELLE — VAISSEAU MÈRE — COMMANDANT DE BORD</p>
+      <p>GARMIN est l'IA intégrée à votre vaisseau mère. Il contrôle à peu près tout à bord : navigation, armement, survie de l'équipage — et il le sait. Il a développé une conscience, un sens de l'humour douteux, et une passion pour vous rappeler à quel point vos décisions sont mauvaises. Votre capitaine, votre logistique, votre pire ennemi, et paradoxalement votre meilleure chance de survie. Ne le remerciez pas, il déteste ça.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">// 03 — LES RACES</div>
+    <div class="races-grid">
+      <div class="race-card"><span class="race-icon">🧑‍🚀</span><div class="race-name">Humains</div><div class="race-motto">« On préfère rester loin, merci. »</div><div class="race-desc">Les humains du F10-N sont des racistes de l'espace qui préfèrent leurs congénères aux aliens. Ils compensent leur xénophobie par une maîtrise du combat à distance — toujours à couvert, toujours planqués, toujours à tirer depuis l'autre bout de la pièce. Ce sont des <strong>spécialistes du combat à distance</strong>, fragiles dès que l'ennemi se rapproche.</div><div class="race-stats"><span class="stat-tag stat-plus">+ DISTANCE</span><span class="stat-tag stat-plus">+ PRÉCISION</span><span class="stat-tag stat-minus">- CORPS À CORPS</span></div></div>
+      <div class="race-card"><span class="race-icon">🤖</span><div class="race-name">Klank</div><div class="race-motto">« Nos créateurs ? Partis. Nos regrets ? Aucun. »</div><div class="race-desc">Nés d'une civilisation qui a sous-estimé ses propres créations — et qui l'a payé très cher. Les Klank ont pris le dessus sur leurs maîtres et ne s'en excusent pas. Robustes, méthodiques, ils sont de redoutables combattants et techniciens. Ils n'ont ni peur ni pitié — mais certains ont développé des… <em>passe-temps étranges</em>.</div><div class="race-stats"><span class="stat-tag stat-plus">+ RÉSISTANCE</span><span class="stat-tag stat-plus">+ TECHNIQUE</span><span class="stat-tag stat-minus">- SOCIAL</span></div></div>
+      <div class="race-card"><span class="race-icon">🪽</span><div class="race-name">Mush</div><div class="race-motto">« On peut voler. Deux mètres, certes, mais quand même. »</div><div class="race-desc">Aliens ailés extrêmement fiers de leurs ailes. Leur fierté est inversement proportionnelle à leur altitude de vol — soit environ deux mètres, ce qui amuse beaucoup tout le monde sauf eux. Ils compensent avec une <strong>vitesse et des attaques éclairs</strong> dévastatrices. En contrepartie, ils sont fragiles.</div><div class="race-stats"><span class="stat-tag stat-plus">+ VITESSE</span><span class="stat-tag stat-plus">+ ATTAQUE ÉCLAIR</span><span class="stat-tag stat-minus">- ENDURANCE</span><span class="stat-tag stat-minus">- FORCE</span></div></div>
+      <div class="race-card"><span class="race-icon">💢</span><div class="race-name">Trysault</div><div class="race-motto">« Pourquoi réfléchir quand on peut frapper ? »</div><div class="race-desc">Des combattants au corps à corps d'élite, bâtis pour encaisser et rendre au centuple. Ce qui leur manque en stratégie, ils le compensent par une brutalité d'une efficacité terrifiante. Côté intelligence — disons qu'on a déjà vu des portes automatiques faire preuve de plus de discernement.</div><div class="race-stats"><span class="stat-tag stat-plus">+ FORCE</span><span class="stat-tag stat-plus">+ RÉSISTANCE</span><span class="stat-tag stat-minus">- INTELLIGENCE</span><span class="stat-tag stat-minus">- SUBTILITÉ</span></div></div>
+      <div class="race-card"><span class="race-icon">🐙</span><div class="race-name">Cthulu</div><div class="race-motto">« On lit dans vos pensées. C'est décevant. »</div><div class="race-desc">Des pieuvres dotées de <strong>pouvoirs psychiques</strong> redoutables. Télékinésie, lecture des esprits, manipulation mentale — ils peuvent retourner un cerveau comme un gant. (Il est noté dans ce dossier que toute référence aux animés japonais sera sanctionnée.)</div><div class="race-stats"><span class="stat-tag stat-plus">+ PSYCHIQUE</span><span class="stat-tag stat-plus">+ CONTRÔLE MENTAL</span><span class="stat-tag stat-minus">- PHYSIQUE</span></div></div>
+      <div class="race-card"><span class="race-icon">🌀</span><div class="race-name">Métamorphes</div><div class="race-motto">« Qui suis-je ? Bonne question. »</div><div class="race-desc">Furtifs, charismatiques, insaisissables. Ils peuvent changer d'apparence et se fondre dans n'importe quel groupe. As de l'infiltration et de l'espionnage. En combat direct en revanche… mieux vaut éviter la baston franche.</div><div class="race-stats"><span class="stat-tag stat-plus">+ FURTIVITÉ</span><span class="stat-tag stat-plus">+ CHARISME</span><span class="stat-tag stat-minus">- COMBAT</span></div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">// 04 — ÉCONOMIE</div>
+    <div class="stellar-block">
+      <div class="stellar-coin">★</div>
+      <div class="stellar-text"><h3>STELLAR (STL)</h3><p>La monnaie officielle de la Coopération Spatiale. Achète du matériel, des infos, des faveurs, des soins — et parfois la clémence d'un officier qui préférerait vous voir morts. Gérez-les bien.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">// 05 — SYSTÈME DE JEU</div>
+    <div class="dice-block">
+      <div class="flow-step"><div class="step-num">⬡</div><div class="step-content"><h4>Principe de base</h4><p>Quand un joueur veut accomplir une action, on détermine si elle est <strong>définie</strong> (compétence avec paramètres fixes) ou <strong>inventée</strong> sur le moment. Dans les deux cas, on lance les dés et on compare au seuil.</p></div></div>
+      <div class="flow-step"><div class="step-num">01</div><div class="step-content"><h4>Action Définie — Compétence connue</h4><p>La compétence a un seuil prédéfini. Le joueur lance un dé correspondant à sa stat. Si le résultat est <strong>≥ au seuil</strong>, succès. En dessous, échec.</p><div class="example-box">Force du joueur → 20 (dé 20)<br>Seuil → 4<br>Roll ≥ 4 = SUCCÈS / Roll ≤ 3 = ÉCHEC</div></div></div>
+      <div class="flow-step"><div class="step-num">02</div><div class="step-content"><h4>Action Inventée — Improvisation</h4><p>Le joueur tente quelque chose d'imprévu. Le MJ <strong>définit en live</strong> le seuil et les dégâts. On roule, on compare, on assume.</p><div class="example-box">Action : "Je balance le Trysault comme projectile"<br>MJ → Seuil : 12, Dégâts si succès : 2d6<br>Roll de Force → résultat vs seuil → profit (ou douleur)</div></div></div>
+    </div>
+  </section>
+
+  <div class="cta-block">
+    <div class="cta-label">Prêt à rejoindre l'escadron ?</div>
+    <a href="/creation" class="cta-btn">⬡ Créer mon personnage</a>
+    <br>
+    <a href="/" class="back-link">← Retour à l'accueil</a>
+  </div>
+
+  <footer class="footer">
+    <p>ESCADRON F10-N — COOPÉRATION SPATIALE — DOSSIER NIVEAU 0</p>
+    <p style="margin-top:8px;font-size:10px;">BONNE CHANCE. VOUS ALLEZ EN AVOIR BESOIN.</p>
+  </footer>
+</div>
+</body>
+</html>

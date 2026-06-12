@@ -123,6 +123,14 @@ export default function Accueil() {
         </button>
         <button
           style={styles.mjBtn}
+          onClick={() => window.location.href = '/lore.html'}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.color = 'var(--gold)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)' }}
+        >
+          Explication de l'univers
+        </button>
+        <button
+          style={styles.mjBtn}
           onClick={() => navigate('/maitre/login')}
           onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.color = 'var(--gold)' }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--muted)' }}
