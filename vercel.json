@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/((?!lore.html|avatars/).*)", "destination": "/index.html" }
+  ]
+}
