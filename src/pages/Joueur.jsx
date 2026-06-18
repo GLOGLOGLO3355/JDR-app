@@ -279,10 +279,10 @@ export default function Joueur() {
   const p = personnages.find(x => x.id === Number(id))
 
   // Vérifier en BDD si ce joueur a déjà validé le bonus actif
-useEffect(() => {
-  if (!bonusActif || !p) { setDejaValide(false); return }
-  aDejaValide(bonusActif.id, p.id).then(setDejaValide)
-}, [bonusActif, p?.id])
+  useEffect(() => {
+    if (!bonusActif || !p) { setDejaValide(false); return }
+    aDejaValide(bonusActif.id, p.id).then(setDejaValide)
+  }, [bonusActif, p?.id])
 
   // Détecter changements de PV
   useEffect(() => {
@@ -396,6 +396,38 @@ useEffect(() => {
           </div>
         ))}
       </div>
+
+      {/* PV des autres membres de l'escadron */}
+      {personnages.filter(x => x.id !== p.id).length > 0 && (
+        <div style={{ marginTop: '1.5rem' }}>
+          <div style={{ fontFamily: 'var(--font-title)', color: 'var(--muted)', fontSize: '0.75rem', letterSpacing: '0.1em', marginBottom: '0.8rem', textTransform: 'uppercase' }}>
+            Escadron
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            {personnages.filter(x => x.id !== p.id).map(autre => {
+              const pct = Math.max(0, Math.min(100, (autre.pv_actuel / autre.pv_max) * 100))
+              const couleur = pct > 60 ? 'var(--success)' : pct > 30 ? '#f0c060' : 'var(--danger)'
+              return (
+                <div key={autre.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '0.7rem 1rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                  {autre.avatar
+                    ? <img src={autre.avatar} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                    : <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>👤</span>
+                  }
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.3rem' }}>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{autre.nom}</span>
+                      <span style={{ fontSize: '0.8rem', color: couleur, fontWeight: 700, flexShrink: 0, marginLeft: '0.5rem' }}>{autre.pv_actuel} / {autre.pv_max}</span>
+                    </div>
+                    <div style={{ height: '5px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${pct}%`, background: couleur, borderRadius: '3px', transition: 'all 0.5s ease' }} />
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Compétences */}
       {(() => {
