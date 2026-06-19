@@ -441,33 +441,46 @@ export default function Joueur() {
               Compétences
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
-              {competences.map((comp, i) => (
+              {competences.map((comp, i) => {
+              const estBarree = !comp.locked && (p.competences_barrees || []).includes(comp.nom)
+              return (
                 <div key={i} style={{
-                  background: comp.locked ? 'var(--bg2)' : 'var(--bg2)',
-                  border: `1px solid ${comp.locked ? 'var(--border)' : couleurClasse + '55'}`,
+                  background: 'var(--bg2)',
+                  border: `1px solid ${comp.locked ? 'var(--border)' : estBarree ? 'var(--danger)' : couleurClasse + '55'}`,
                   borderRadius: 'var(--radius)',
                   padding: '0.9rem 1rem',
-                  opacity: comp.locked ? 0.5 : 1,
+                  opacity: comp.locked ? 0.5 : estBarree ? 0.6 : 1,
                   filter: comp.locked ? 'grayscale(1)' : 'none',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: comp.locked ? 0 : '0.4rem' }}>
                     <span style={{ fontSize: '1.1rem' }}>{comp.icone}</span>
-                    <span style={{ fontFamily: 'var(--font-title)', color: comp.locked ? 'var(--muted)' : couleurClasse, fontSize: '0.85rem' }}>
+                    <span style={{
+                      fontFamily: 'var(--font-title)',
+                      color: comp.locked ? 'var(--muted)' : estBarree ? 'var(--danger)' : couleurClasse,
+                      fontSize: '0.85rem',
+                      textDecoration: estBarree ? 'line-through' : 'none',
+                    }}>
                       {comp.nom}
                     </span>
-                    {comp.seuil && !comp.locked && (
+                    {estBarree && (
+                      <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--danger)', fontStyle: 'italic' }}>
+                        Indisponible
+                      </span>
+                    )}
+                    {comp.seuil && !comp.locked && !estBarree && (
                       <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--muted)', fontStyle: 'italic' }}>
                         {comp.seuil}
                       </span>
                     )}
                   </div>
                   {!comp.locked && (
-                    <div style={{ fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.5, opacity: 0.85 }}>
+                    <div style={{ fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.5, opacity: 0.85, textDecoration: estBarree ? 'line-through' : 'none' }}>
                       {comp.description}
                     </div>
                   )}
                 </div>
-              ))}
+              )
+            })}
             </div>
           </div>
         )

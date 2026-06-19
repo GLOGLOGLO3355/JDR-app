@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getState, subscribe, updatePersonnage, updateAllPersonnages, demanderJet, annulerJet, accorderBonus, annulerBonus, getValidations, clorerBonusSiTermine } from '../lib/store.js'
+import { getState, subscribe, updatePersonnage, updateAllPersonnages, demanderJet, annulerJet, accorderBonus, annulerBonus, getValidations, clorerBonusSiTermine, barrerCompetence, debarrerToutesCompetences } from '../lib/store.js'
 import { STATS_CONFIG } from '../lib/supabase.js'
+import { CLASSES, COMPETENCES } from '../lib/classes.js'
 
 // ── Notification flottante résultat (identique à Joueur.jsx) ─────────────────
 function NotifResultat({ jet, statCfg, avatarJoueur, nomJoueur }) {
@@ -181,11 +182,12 @@ function CarteJoueur({ p, onModif }) {
 }
 
 // ── Onglet Dés ────────────────────────────────────────────────────────────────
-function OngletDes({ personnages, jetActif }) {
+function OngletDes({ personnages, jetActif, onModif }) {
   const [joueurId, setJoueurId] = useState('')
   const [stat, setStat] = useState('')
   const [palier, setPalier] = useState('')
   const [envoi, setEnvoi] = useState(false)
+  const [confirmReset, setConfirmReset] = useState(false)
 
   const joueurSelectionne = personnages.find(p => p.id === Number(joueurId))
   const faces = joueurSelectionne && stat ? joueurSelectionne[stat] : null
@@ -285,6 +287,85 @@ function OngletDes({ personnages, jetActif }) {
           {envoi ? 'Envoi...' : jetActif?.statut === 'en_attente' ? 'Jet en attente...' : '🎲 Demander le jet'}
         </button>
       </div>
+      {/* Compétences des joueurs */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.5rem', marginTop: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', flexWrap: 'wrap', gap: '0.6rem' }}>
+          <h2 style={{ fontFamily: 'var(--font-title)', color: 'var(--gold2)', fontSize: '1rem', margin: 0 }}>📖 Compétences</h2>
+          {confirmReset ? (
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <span style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>Confirmer ?</span>
+              <button onClick={async () => { await debarrerToutesCompetences(); onModif('Toutes les compétences ont été débarrées pour tous les joueurs'); setConfirmReset(false) }}
+                style={{ background: 'var(--gold)', color: '#000', border: 'none', borderRadius: '6px', padding: '0.35rem 0.8rem', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>
+                Oui, tout débarrer
+              </button>
+              <button onClick={() => setConfirmReset(false)} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--muted)', borderRadius: '6px', padding: '0.35rem 0.7rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                Annuler
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => setConfirmReset(true)} style={{ background: 'transparent', border: '1px solid var(--gold)', color: 'var(--gold)', borderRadius: '6px', padding: '0.4rem 0.9rem', fontSize: '0.8rem', fontFamily: 'var(--font-title)', cursor: 'pointer' }}>
+              ↺ Tout débarrer
+            </button>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {personnages.map(p => {
+            const classeKey = Object.keys(CLASSES).find(k => CLASSES[k].nom === p.classe) || p.classe
+            const competences = (COMPETENCES[classeKey] || []).filter(c => !c.locked)
+            const couleurClasse = CLASSES[classeKey]?.couleur || 'var(--gold)'
+            const barrees = p.competences_barrees || []
+
+            return (
+              <div key={p.id}>
+                <div style={{ fontFamily: 'var(--font-title)', color: 'var(--gold2)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{p.nom}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {competences.map((comp, i) => {
+                    const estBarree = barrees.includes(comp.nom)
+                    return (
+                      <div key={i}
+                        onClick={async () => {
+                          await barrerCompetence(p.id, comp.nom)
+                          onModif(`${p.nom} — Compétence "${comp.nom}" ${estBarree ? 'débarrée' : 'barrée'}`)
+                        }}
+                        style={{
+                          cursor: 'pointer', background: 'var(--bg3)',
+                          border: `1px solid ${estBarree ? 'var(--danger)' : couleurClasse + '55'}`,
+                          borderRadius: 'var(--radius)', padding: '0.6rem 0.9rem',
+                          opacity: estBarree ? 0.6 : 1, transition: 'all 0.15s',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                          <span style={{ fontSize: '1rem' }}>{comp.icone}</span>
+                          <span style={{
+                            color: estBarree ? 'var(--muted)' : couleurClasse,
+                            fontSize: '0.85rem',
+                            textDecoration: estBarree ? 'line-through' : 'none',
+                            flex: 1,
+                          }}>
+                            {comp.nom}
+                          </span>
+                          {comp.seuil && (
+                            <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontStyle: 'italic' }}>
+                              {comp.seuil}
+                            </span>
+                          )}
+                          <span style={{ fontSize: '0.7rem', color: estBarree ? 'var(--danger)' : 'var(--muted)' }}>
+                            {estBarree ? 'Barrée' : 'Barrer'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text)', lineHeight: 1.4, opacity: 0.8, textDecoration: estBarree ? 'line-through' : 'none' }}>
+                          {comp.description}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }
@@ -376,8 +457,7 @@ export default function Maitre() {
       </div>
 
       {onglet === 'joueurs' && personnages.map(p => <CarteJoueur key={p.id} p={p} onModif={addLog} />)}
-      {onglet === 'des' && <OngletDes personnages={personnages} jetActif={jetActif} />}
-
+    {onglet === 'des' && <OngletDes personnages={personnages} jetActif={jetActif} onModif={addLog} />}
       {onglet === 'global' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Section points bonus */}

@@ -124,6 +124,23 @@ export async function updatePersonnage(id, changes) {
   if (error) console.error('Supabase update error:', error)
 }
 
+// MJ : barrer/débarrer une compétence pour un joueur
+export async function barrerCompetence(personnageId, nomCompetence) {
+  const personnage = state.personnages.find(p => p.id === personnageId)
+  if (!personnage) return
+  const actuelles = personnage.competences_barrees || []
+  const dejaBarree = actuelles.includes(nomCompetence)
+  const nouvelles = dejaBarree
+    ? actuelles.filter(n => n !== nomCompetence)
+    : [...actuelles, nomCompetence]
+  await updatePersonnage(personnageId, { competences_barrees: nouvelles })
+}
+
+// MJ : débarrer toutes les compétences de tous les joueurs
+export async function debarrerToutesCompetences() {
+  await updateAllPersonnages({ competences_barrees: [] })
+}
+
 export async function updateAllPersonnages(changes) {
   const ids = state.personnages.map(p => p.id)
   setState(s => ({ ...s, personnages: s.personnages.map(p => ({ ...p, ...changes })) }))
@@ -219,7 +236,7 @@ export async function validerBonus(bonusId, personnageId, changements) {
   const personnage = state.personnages.find(p => p.id === personnageId)
   if (personnage && changements.defense !== undefined) {
     const nouvelleDefense = changements.defense
-    const nouveauPvMax = nouvelleDefense + 40
+    const nouveauPvMax = nouvelleDefense * 2 + 30
     const delta = nouveauPvMax - personnage.pv_max
     changements.pv_max = nouveauPvMax
     changements.pv_actuel = Math.max(0, personnage.pv_actuel + delta)
