@@ -150,6 +150,27 @@ export async function updateAllPersonnages(changes) {
   }
 }
 
+// MJ : ajouter une compétence custom à un joueur
+export async function ajouterCompetenceCustom(personnageId, competence) {
+  const personnage = state.personnages.find(p => p.id === personnageId)
+  if (!personnage) return
+  const actuelles = personnage.competences_custom || []
+  const nouvelles = [...actuelles, competence]
+  await updatePersonnage(personnageId, { competences_custom: nouvelles })
+}
+
+// MJ : retirer une compétence custom d'un joueur
+export async function retirerCompetenceCustom(personnageId, nomCompetence) {
+  const personnage = state.personnages.find(p => p.id === personnageId)
+  if (!personnage) return
+  const actuelles = personnage.competences_custom || []
+  const nouvelles = actuelles.filter(c => c.nom !== nomCompetence)
+  await updatePersonnage(personnageId, { competences_custom: nouvelles })
+  // Nettoyer aussi competences_barrees si la compétence retirée y était
+  const barrees = (personnage.competences_barrees || []).filter(n => n !== nomCompetence)
+  await updatePersonnage(personnageId, { competences_barrees: barrees })
+}
+
 // MJ : demander un jet
 export async function demanderJet(personnageId, stat, palier, faces) {
   if (!supabase) return

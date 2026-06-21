@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getState, subscribe, updatePersonnage, updateAllPersonnages, demanderJet, annulerJet, accorderBonus, annulerBonus, getValidations, clorerBonusSiTermine, barrerCompetence, debarrerToutesCompetences } from '../lib/store.js'
+import { getState, subscribe, updatePersonnage, updateAllPersonnages, demanderJet, annulerJet, accorderBonus, annulerBonus, getValidations, clorerBonusSiTermine, barrerCompetence, debarrerToutesCompetences, ajouterCompetenceCustom, retirerCompetenceCustom } from '../lib/store.js'
 import { STATS_CONFIG } from '../lib/supabase.js'
 import { CLASSES, COMPETENCES } from '../lib/classes.js'
 
@@ -62,6 +62,7 @@ function ResultatDe({ resultat, statCfg, nomJoueur, onClose }) {
     return () => clearInterval(interval)
   }, [])
 
+
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
       <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg2)', border: `2px solid ${statCfg.color}`, borderRadius: '20px', padding: '2.5rem 3rem', textAlign: 'center', boxShadow: `0 0 60px ${statCfg.color}33`, minWidth: '260px', animation: 'popIn 0.2s ease' }}>
@@ -69,6 +70,60 @@ function ResultatDe({ resultat, statCfg, nomJoueur, onClose }) {
         <div style={{ fontFamily: 'var(--font-title)', color: statCfg.color, fontSize: '0.9rem', marginBottom: '1rem' }}>{statCfg.icon} {statCfg.label} — D{resultat.faces}</div>
         <div style={{ fontSize: '5rem', fontWeight: 900, lineHeight: 1, color: 'var(--text)', fontVariantNumeric: 'tabular-nums' }}>{compteur ?? '?'}</div>
         <button onClick={onClose} style={{ marginTop: '1.5rem', background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--muted)', borderRadius: '8px', padding: '0.5rem 1.5rem', fontSize: '0.85rem' }}>Fermer</button>
+      </div>
+    </div>
+  )
+}
+
+
+// ── Formulaire d'ajout de compétence custom ──────────────────────────────────
+function AjoutCompetenceForm({ personnage, onAjout }) {
+  const [ouvert, setOuvert] = useState(false)
+  const [nom, setNom] = useState('')
+  const [icone, setIcone] = useState('')
+  const [description, setDescription] = useState('')
+  const [seuil, setSeuil] = useState('')
+
+  async function handleAjouter() {
+    if (!nom.trim() || !description.trim()) return
+    const competence = { nom: nom.trim(), description: description.trim() }
+    if (icone.trim()) competence.icone = icone.trim()
+    if (seuil.trim()) competence.seuil = seuil.trim()
+    await ajouterCompetenceCustom(personnage.id, competence)
+    onAjout(`${personnage.nom} — Nouvelle compétence spéciale "${competence.nom}" ajoutée`)
+    setNom(''); setIcone(''); setDescription(''); setSeuil(''); setOuvert(false)
+  }
+
+  if (!ouvert) {
+    return (
+      <button onClick={() => setOuvert(true)}
+        style={{ background: 'transparent', border: '1px dashed var(--border)', color: 'var(--muted)', borderRadius: 'var(--radius)', padding: '0.5rem 0.9rem', fontSize: '0.8rem', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
+        + Ajouter une compétence spéciale
+      </button>
+    )
+  }
+
+  return (
+    <div style={{ background: 'var(--bg3)', border: '1px dashed var(--gold)', borderRadius: 'var(--radius)', padding: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <input placeholder="Emoji (optionnel)" value={icone} onChange={e => setIcone(e.target.value)}
+          style={{ width: '90px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', padding: '0.4rem 0.5rem', fontSize: '0.85rem' }} />
+        <input placeholder="Nom de la compétence" value={nom} onChange={e => setNom(e.target.value)}
+          style={{ flex: 1, background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', padding: '0.4rem 0.5rem', fontSize: '0.85rem' }} />
+      </div>
+      <textarea placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} rows={2}
+        style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', padding: '0.4rem 0.5rem', fontSize: '0.85rem', resize: 'vertical' }} />
+      <input placeholder="Seuil (optionnel, ex: Seuil : 15 Force)" value={seuil} onChange={e => setSeuil(e.target.value)}
+        style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', padding: '0.4rem 0.5rem', fontSize: '0.85rem' }} />
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <button onClick={handleAjouter} disabled={!nom.trim() || !description.trim()}
+          style={{ flex: 1, background: nom.trim() && description.trim() ? 'var(--gold)' : 'var(--bg2)', color: nom.trim() && description.trim() ? '#000' : 'var(--muted)', border: 'none', borderRadius: '6px', padding: '0.5rem', fontWeight: 700, fontSize: '0.85rem', cursor: nom.trim() && description.trim() ? 'pointer' : 'default' }}>
+          ✓ Ajouter
+        </button>
+        <button onClick={() => { setOuvert(false); setNom(''); setIcone(''); setDescription(''); setSeuil('') }}
+          style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--muted)', borderRadius: '6px', padding: '0.5rem 0.9rem', fontSize: '0.85rem', cursor: 'pointer' }}>
+          Annuler
+        </button>
       </div>
     </div>
   )
@@ -319,7 +374,8 @@ function OngletDes({ personnages, jetActif, onModif }) {
             return (
               <div key={p.id}>
                 <div style={{ fontFamily: 'var(--font-title)', color: 'var(--gold2)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{p.nom}</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.6rem' }}>
                   {competences.map((comp, i) => {
                     const estBarree = barrees.includes(comp.nom)
                     return (
@@ -361,6 +417,63 @@ function OngletDes({ personnages, jetActif, onModif }) {
                     )
                   })}
                 </div>
+
+                {/* Compétences spéciales (ajoutées manuellement) */}
+                {(p.competences_custom || []).length > 0 && (
+                  <div style={{ marginBottom: '0.6rem' }}>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>⭐ Compétences spéciales</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {(p.competences_custom || []).map((comp, i) => {
+                        const estBarree = barrees.includes(comp.nom)
+                        return (
+                          <div key={i} style={{
+                            background: 'var(--bg3)',
+                            border: `1px solid ${estBarree ? 'var(--danger)' : 'var(--gold)' + '55'}`,
+                            borderRadius: 'var(--radius)', padding: '0.6rem 0.9rem',
+                            opacity: estBarree ? 0.6 : 1,
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                              {comp.icone && <span style={{ fontSize: '1rem' }}>{comp.icone}</span>}
+                              <span onClick={async () => {
+                                  await barrerCompetence(p.id, comp.nom)
+                                  onModif(`${p.nom} — Compétence "${comp.nom}" ${estBarree ? 'débarrée' : 'barrée'}`)
+                                }}
+                                style={{
+                                  color: estBarree ? 'var(--muted)' : 'var(--gold2)',
+                                  fontSize: '0.85rem', cursor: 'pointer',
+                                  textDecoration: estBarree ? 'line-through' : 'none', flex: 1,
+                                }}>
+                                {comp.nom}
+                              </span>
+                              {comp.seuil && (
+                                <span style={{ fontSize: '0.7rem', color: 'var(--muted)', fontStyle: 'italic' }}>{comp.seuil}</span>
+                              )}
+                              <span onClick={async () => {
+                                  await barrerCompetence(p.id, comp.nom)
+                                  onModif(`${p.nom} — Compétence "${comp.nom}" ${estBarree ? 'débarrée' : 'barrée'}`)
+                                }}
+                                style={{ fontSize: '0.7rem', color: estBarree ? 'var(--danger)' : 'var(--muted)', cursor: 'pointer' }}>
+                                {estBarree ? 'Barrée' : 'Barrer'}
+                              </span>
+                              <button onClick={async () => {
+                                  await retirerCompetenceCustom(p.id, comp.nom)
+                                  onModif(`${p.nom} — Compétence spéciale "${comp.nom}" supprimée`)
+                                }}
+                                style={{ background: 'transparent', border: 'none', color: 'var(--danger)', fontSize: '0.85rem', cursor: 'pointer', padding: '0 0.2rem' }}>
+                                ✕
+                              </button>
+                            </div>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--text)', lineHeight: 1.4, opacity: 0.8, textDecoration: estBarree ? 'line-through' : 'none' }}>
+                              {comp.description}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <AjoutCompetenceForm personnage={p} onAjout={onModif} />
               </div>
             )
           })}

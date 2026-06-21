@@ -432,55 +432,76 @@ export default function Joueur() {
       {/* Compétences */}
       {(() => {
         const classeKey = Object.keys(CLASSES).find(k => CLASSES[k].nom === p.classe) || p.classe
-        const competences = COMPETENCES[classeKey]
+        const competencesBase = COMPETENCES[classeKey]
         const couleurClasse = CLASSES[classeKey]?.couleur || 'var(--gold)'
-        if (!competences) return null
+        if (!competencesBase) return null
+
+// Remplacer les slots verrouillés (???) par les compétences spéciales du joueur, dans l'ordre
+        const customs = p.competences_custom || []
+        let customIndex = 0
+        const competencesAffichees = competencesBase.map(comp => {
+          if (comp.locked && customIndex < customs.length) {
+            const custom = customs[customIndex]
+            customIndex++
+            return { ...custom, estSpeciale: true }
+          }
+          return comp
+        })
+        // Compétences spéciales en surplus (plus de slots ??? disponibles) : ajoutées à la suite
+        const customsRestantes = customs.slice(customIndex).map(c => ({ ...c, estSpeciale: true }))
+        const competencesFinales = [...competencesAffichees, ...customsRestantes]
+
         return (
           <div style={{ marginTop: '1.5rem' }}>
             <div style={{ fontFamily: 'var(--font-title)', color: 'var(--muted)', fontSize: '0.75rem', letterSpacing: '0.1em', marginBottom: '0.8rem', textTransform: 'uppercase' }}>
               Compétences
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
-              {competences.map((comp, i) => {
-              const estBarree = !comp.locked && (p.competences_barrees || []).includes(comp.nom)
-              return (
-                <div key={i} style={{
-                  background: 'var(--bg2)',
-                  border: `1px solid ${comp.locked ? 'var(--border)' : estBarree ? 'var(--danger)' : couleurClasse + '55'}`,
-                  borderRadius: 'var(--radius)',
-                  padding: '0.9rem 1rem',
-                  opacity: comp.locked ? 0.5 : estBarree ? 0.6 : 1,
-                  filter: comp.locked ? 'grayscale(1)' : 'none',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: comp.locked ? 0 : '0.4rem' }}>
-                    <span style={{ fontSize: '1.1rem' }}>{comp.icone}</span>
-                    <span style={{
-                      fontFamily: 'var(--font-title)',
-                      color: comp.locked ? 'var(--muted)' : estBarree ? 'var(--danger)' : couleurClasse,
-                      fontSize: '0.85rem',
-                      textDecoration: estBarree ? 'line-through' : 'none',
-                    }}>
-                      {comp.nom}
-                    </span>
-                    {estBarree && (
-                      <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--danger)', fontStyle: 'italic' }}>
-                        Indisponible
+              {competencesFinales.map((comp, i) => {
+                const estBarree = !comp.locked && (p.competences_barrees || []).includes(comp.nom)
+                return (
+                  <div key={i} style={{
+                    background: 'var(--bg2)',
+                    border: `1px solid ${comp.locked ? 'var(--border)' : estBarree ? 'var(--danger)' : comp.estSpeciale ? 'var(--gold)' + '55' : couleurClasse + '55'}`,
+                    borderRadius: 'var(--radius)',
+                    padding: '0.9rem 1rem',
+                    opacity: comp.locked ? 0.5 : estBarree ? 0.6 : 1,
+                    filter: comp.locked ? 'grayscale(1)' : 'none',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: comp.locked ? 0 : '0.4rem' }}>
+                      <span style={{ fontSize: '1.1rem' }}>{comp.icone}</span>
+                      <span style={{
+                        fontFamily: 'var(--font-title)',
+                        color: comp.locked ? 'var(--muted)' : estBarree ? 'var(--danger)' : comp.estSpeciale ? 'var(--gold2)' : couleurClasse,
+                        fontSize: '0.85rem',
+                        textDecoration: estBarree ? 'line-through' : 'none',
+                      }}>
+                        {comp.nom}
                       </span>
-                    )}
-                    {comp.seuil && !comp.locked && !estBarree && (
-                      <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--muted)', fontStyle: 'italic' }}>
-                        {comp.seuil}
-                      </span>
+                      {comp.estSpeciale && !estBarree && (
+                        <span style={{ marginLeft: comp.seuil ? '0' : 'auto', fontSize: '0.65rem', color: 'var(--gold)', fontStyle: 'italic' }}>
+                          ⭐
+                        </span>
+                      )}
+                      {estBarree && (
+                        <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--danger)', fontStyle: 'italic' }}>
+                          Indisponible
+                        </span>
+                      )}
+                      {comp.seuil && !comp.locked && !estBarree && (
+                        <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--muted)', fontStyle: 'italic' }}>
+                          {comp.seuil}
+                        </span>
+                      )}
+                    </div>
+                    {!comp.locked && (
+                      <div style={{ fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.5, opacity: 0.85, textDecoration: estBarree ? 'line-through' : 'none' }}>
+                        {comp.description}
+                      </div>
                     )}
                   </div>
-                  {!comp.locked && (
-                    <div style={{ fontSize: '0.82rem', color: 'var(--text)', lineHeight: 1.5, opacity: 0.85, textDecoration: estBarree ? 'line-through' : 'none' }}>
-                      {comp.description}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+                )
+              })}
             </div>
           </div>
         )
