@@ -15,12 +15,13 @@ function NotifResultat({ jet, statCfg, avatarJoueur, nomJoueur }) {
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [jet.id])
 
-  if (!visible || !statCfg) return null
+  if (!visible) return null
 
-  const reussite = jet.valeur >= jet.palier
+  const estLibre = !jet.stat
+  const reussite = !estLibre && jet.valeur >= jet.palier
   const critique = jet.valeur === jet.faces
   const echecCrit = jet.valeur === 1
-  const couleur = critique ? 'var(--gold)' : echecCrit ? '#cc0000' : reussite ? 'var(--success)' : 'var(--danger)'
+  const couleur = critique ? 'var(--gold)' : echecCrit ? '#cc0000' : estLibre ? 'var(--gold2)' : reussite ? 'var(--success)' : 'var(--danger)'
 
   return (
     <div style={{
@@ -31,21 +32,27 @@ function NotifResultat({ jet, statCfg, avatarJoueur, nomJoueur }) {
       boxShadow: `0 0 40px ${couleur}44`,
       animation: fadeout ? 'fadeOut 0.8s ease forwards' : 'slideDown 0.3s ease',
     }}>
-      {avatarJoueur && (
+      {!estLibre && avatarJoueur && (
         <img src={avatarJoueur} alt="avatar"
           style={{ width: '52px', height: '52px', borderRadius: '50%', objectFit: 'cover', border: `2px solid ${couleur}`, marginBottom: '0.5rem' }}
         />
       )}
-      {nomJoueur && <div style={{ fontSize: '0.85rem', color: 'var(--text)', fontWeight: 600, marginBottom: '0.2rem' }}>{nomJoueur}</div>}
+      {estLibre ? (
+        <div style={{ fontSize: '0.85rem', color: 'var(--text)', fontWeight: 600, marginBottom: '0.2rem' }}>🎲 Jet du Maître</div>
+      ) : (
+        nomJoueur && <div style={{ fontSize: '0.85rem', color: 'var(--text)', fontWeight: 600, marginBottom: '0.2rem' }}>{nomJoueur}</div>
+      )}
       <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '0.4rem' }}>
-        {statCfg.icon} {statCfg.label} — D{jet.faces} · Palier {jet.palier}
+        {estLibre ? `D${jet.faces}` : `${statCfg?.icon} ${statCfg?.label} — D${jet.faces} · Palier ${jet.palier}`}
       </div>
       <div style={{ fontSize: '3.5rem', fontWeight: 900, color: couleur, lineHeight: 1, marginBottom: '0.3rem' }}>
         {jet.valeur}
       </div>
-      <div style={{ fontFamily: 'var(--font-title)', fontSize: '0.9rem', color: couleur, letterSpacing: '0.08em' }}>
-        {critique ? '✦ RÉUSSITE CRITIQUE ✦' : echecCrit ? '✗ ÉCHEC CRITIQUE' : reussite ? '✓ Réussite' : '✗ Échec'}
-      </div>
+      {!estLibre && (
+        <div style={{ fontFamily: 'var(--font-title)', fontSize: '0.9rem', color: couleur, letterSpacing: '0.08em' }}>
+          {critique ? '✦ RÉUSSITE CRITIQUE ✦' : echecCrit ? '✗ ÉCHEC CRITIQUE' : reussite ? '✓ Réussite' : '✗ Échec'}
+        </div>
+      )}
     </div>
   )
 }
@@ -243,6 +250,9 @@ function OngletDes({ personnages, jetActif, onModif }) {
   const [palier, setPalier] = useState('')
   const [envoi, setEnvoi] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
+    const [facesLibre, setFacesLibre] = useState('')
+  const [envoiLibre, setEnvoiLibre] = useState(false)
+
 
   const joueurSelectionne = personnages.find(p => p.id === Number(joueurId))
   const faces = joueurSelectionne && stat ? joueurSelectionne[stat] : null
@@ -254,6 +264,17 @@ function OngletDes({ personnages, jetActif, onModif }) {
     await demanderJet(Number(joueurId), stat, palierNum, faces)
     setEnvoi(false)
   }
+
+    async function handleLancerLibre() {
+    const f = parseInt(facesLibre)
+    if (isNaN(f) || f < 1) return
+    setEnvoiLibre(true)
+    const { lancerDeLibre } = await import('../lib/store.js')
+    const valeur = await lancerDeLibre(f)
+    onModif(`🎲 Jet libre du MJ — D${f} → ${valeur}`)
+    setEnvoiLibre(false)
+  }
+
 
   const jetConcerne = jetActif && personnages.find(p => p.id === jetActif.personnage_id)
   const jetStatCfg = jetActif && STATS_CONFIG.find(c => c.key === jetActif.stat)
@@ -309,7 +330,8 @@ function OngletDes({ personnages, jetActif, onModif }) {
             ))}
           </div>
         </div>
-
+        {/* Roll libre */}
+      
         <div style={{ marginBottom: '1rem' }}>
           <div style={{ color: 'var(--muted)', fontSize: '0.8rem', marginBottom: '0.4rem' }}>Statistique</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -321,14 +343,12 @@ function OngletDes({ personnages, jetActif, onModif }) {
             ))}
           </div>
         </div>
-
         <div style={{ marginBottom: '1.2rem' }}>
           <div style={{ color: 'var(--muted)', fontSize: '0.8rem', marginBottom: '0.4rem' }}>Palier (seuil de réussite)</div>
           <input type="number" min="0" placeholder="Ex: 10" value={palier} onChange={e => setPalier(e.target.value)}
             style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)', padding: '0.5rem 0.8rem', fontSize: '1rem', width: '120px' }} />
           {faces && <span style={{ color: 'var(--muted)', fontSize: '0.8rem', marginLeft: '0.8rem' }}>Dé : D{faces}</span>}
         </div>
-
         <button
           onClick={handleDemander}
           disabled={!joueurId || !stat || isNaN(palierNum) || palierNum < 0 || !faces || envoi || jetActif?.statut === 'en_attente'}
@@ -342,6 +362,28 @@ function OngletDes({ personnages, jetActif, onModif }) {
           {envoi ? 'Envoi...' : jetActif?.statut === 'en_attente' ? 'Jet en attente...' : '🎲 Demander le jet'}
         </button>
       </div>
+
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.5rem', marginTop: '1.5rem' }}>
+        <h2 style={{ fontFamily: 'var(--font-title)', color: 'var(--gold2)', fontSize: '1rem', marginBottom: '0.5rem' }}>🎲 Jet libre</h2>
+        <p style={{ color: 'var(--muted)', fontSize: '0.8rem', marginBottom: '1rem' }}>
+          Lance un dé avec une valeur max au choix, visible immédiatement par tous les joueurs.
+        </p>
+        <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
+          <input type="number" min="1" placeholder="Ex: 25" value={facesLibre} onChange={e => setFacesLibre(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleLancerLibre() }}
+            style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)', padding: '0.5rem 0.8rem', fontSize: '1rem', width: '120px' }} />
+          <button onClick={handleLancerLibre} disabled={!parseInt(facesLibre) || parseInt(facesLibre) < 1 || envoiLibre}
+            style={{
+              background: parseInt(facesLibre) > 0 ? 'var(--gold)' : 'var(--bg3)',
+              color: parseInt(facesLibre) > 0 ? '#000' : 'var(--muted)',
+              fontFamily: 'var(--font-title)', fontSize: '0.9rem', padding: '0.6rem 1.4rem',
+              borderRadius: 'var(--radius)', fontWeight: 700, cursor: parseInt(facesLibre) > 0 ? 'pointer' : 'default',
+            }}>
+            {envoiLibre ? 'Lancer...' : `🎲 Lancer (1 à ${facesLibre || '?'})`}
+          </button>
+        </div>
+      </div>
+
       {/* Compétences des joueurs */}
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1.5rem', marginTop: '1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', flexWrap: 'wrap', gap: '0.6rem' }}>
@@ -498,17 +540,25 @@ export default function Maitre() {
     setPersonnages(s.personnages)
     setBonusActif(s.bonusActif)
     const jet = s.jetActif
-    if (jet && jet.statut === 'resolu' && prevJetRef.current?.statut === 'en_attente') {
-      setNotifResultat(jet)
+    if (jet && jet.statut === 'resolu' && (
+      prevJetRef.current?.statut === 'en_attente' ||
+      !prevJetRef.current ||
+      prevJetRef.current.id !== jet.id
+    )) {
+      setNotifResultat(jet)      
       // Logger le résultat du jet
       const joueur = s.personnages.find(p => p.id === jet.personnage_id)
       const statCfg = STATS_CONFIG.find(c => c.key === jet.stat)
       const reussite = jet.valeur >= jet.palier
       const critique = jet.valeur === jet.faces
       const echecCrit = jet.valeur === 1
-      const verdict = critique ? '✦ Réussite critique' : echecCrit ? '✗ Échec critique' : reussite ? '✓ Réussite' : '✗ Échec'
-      addLog(`${joueur?.nom} — ${statCfg?.label} D${jet.faces} → ${jet.valeur} (palier ${jet.palier}) — ${verdict}`)
-    }
+    if (!jet.stat) {
+            addLog(`🎲 Jet libre du MJ — D${jet.faces} → ${jet.valeur}${critique ? ' (✦ max !)' : echecCrit ? ' (✗ 1 !)' : ''}`)
+          } else {
+            const reussite = jet.valeur >= jet.palier
+            const verdict = critique ? '✦ Réussite critique' : echecCrit ? '✗ Échec critique' : reussite ? '✓ Réussite' : '✗ Échec'
+            addLog(`${joueur?.nom} — ${statCfg?.label} D${jet.faces} → ${jet.valeur} (palier ${jet.palier}) — ${verdict}`)
+          }    }
     if (!jet) setNotifResultat(null)
     prevJetRef.current = jet
     setJetActif(jet)

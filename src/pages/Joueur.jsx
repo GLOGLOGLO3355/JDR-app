@@ -132,10 +132,11 @@ function NotifResultat({ jet, statCfg, avatarJoueur, nomJoueur }) {
 
   if (!visible) return null
 
-  const reussite = jet.valeur >= jet.palier
+  const estLibre = !jet.stat
+  const reussite = !estLibre && jet.valeur >= jet.palier
   const critique = jet.valeur === jet.faces
   const echecCrit = jet.valeur === 1
-  const couleur = critique ? 'var(--gold)' : echecCrit ? '#cc0000' : reussite ? 'var(--success)' : 'var(--danger)'
+  const couleur = critique ? 'var(--gold)' : echecCrit ? '#cc0000' : estLibre ? 'var(--gold2)' : reussite ? 'var(--success)' : 'var(--danger)'
 
   return (
     <div style={{
@@ -146,21 +147,27 @@ function NotifResultat({ jet, statCfg, avatarJoueur, nomJoueur }) {
       boxShadow: `0 0 40px ${couleur}44`,
       animation: fadeout ? 'fadeOut 0.8s ease forwards' : 'slideDown 0.3s ease',
     }}>
-      {avatarJoueur && (
+      {!estLibre && avatarJoueur && (
         <img src={avatarJoueur} alt="avatar"
           style={{ width: '52px', height: '52px', borderRadius: '50%', objectFit: 'cover', border: `2px solid ${couleur}`, marginBottom: '0.5rem' }}
         />
       )}
-      {nomJoueur && <div style={{ fontSize: '0.85rem', color: 'var(--text)', fontWeight: 600, marginBottom: '0.2rem' }}>{nomJoueur}</div>}
+      {estLibre ? (
+        <div style={{ fontSize: '0.85rem', color: 'var(--text)', fontWeight: 600, marginBottom: '0.2rem' }}>🎲 Jet du Maître</div>
+      ) : (
+        nomJoueur && <div style={{ fontSize: '0.85rem', color: 'var(--text)', fontWeight: 600, marginBottom: '0.2rem' }}>{nomJoueur}</div>
+      )}
       <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '0.4rem' }}>
-        {statCfg?.icon} {statCfg?.label} — D{jet.faces} · Palier {jet.palier}
+        {estLibre ? `D${jet.faces}` : `${statCfg?.icon} ${statCfg?.label} — D${jet.faces} · Palier ${jet.palier}`}
       </div>
       <div style={{ fontSize: '3.5rem', fontWeight: 900, color: couleur, lineHeight: 1, marginBottom: '0.3rem' }}>
         {jet.valeur}
       </div>
-      <div style={{ fontFamily: 'var(--font-title)', fontSize: '0.9rem', color: couleur, letterSpacing: '0.08em' }}>
-        {critique ? '✦ RÉUSSITE CRITIQUE ✦' : echecCrit ? '✗ ÉCHEC CRITIQUE' : reussite ? '✓ Réussite' : '✗ Échec'}
-      </div>
+      {!estLibre && (
+        <div style={{ fontFamily: 'var(--font-title)', fontSize: '0.9rem', color: couleur, letterSpacing: '0.08em' }}>
+          {critique ? '✦ RÉUSSITE CRITIQUE ✦' : echecCrit ? '✗ ÉCHEC CRITIQUE' : reussite ? '✓ Réussite' : '✗ Échec'}
+        </div>
+      )}
     </div>
   )
 }
@@ -257,7 +264,11 @@ export default function Joueur() {
     const jet = st.jetActif
     const bonus = st.bonusActif
 
-    if (jet && jet.statut === 'resolu' && prevJetRef.current?.statut === 'en_attente') {
+    if (jet && jet.statut === 'resolu' && (
+      prevJetRef.current?.statut === 'en_attente' ||
+      !prevJetRef.current ||
+      prevJetRef.current.id !== jet.id
+    )) {
       setNotifResultat(jet)
     }
     if (!jet) setNotifResultat(null)

@@ -88,6 +88,8 @@ export async function refresh() {
   }
 }
 
+let dernierJetResoluId = null
+
 export async function refreshJet() {
   if (!supabase) return
   const { data, error } = await supabase
@@ -98,7 +100,6 @@ export async function refreshJet() {
     .single()
 
   if (error) {
-    // Aucun jet — clear si on en avait un
     if (state.jetActif) setJet(null)
     return
   }
@@ -106,17 +107,21 @@ export async function refreshJet() {
   const jet = data
   const prevJet = state.jetActif
 
-  // Nouveau jet ou changement de statut → propager
-  if (!prevJet || prevJet.id !== jet.id || prevJet.statut !== jet.statut) {
-    if (jet.statut === 'resolu' && prevJet?.statut === 'en_attente') {
+  if (jet.statut === 'en_attente') {
+    if (!prevJet || prevJet.id !== jet.id || prevJet.statut !== jet.statut) {
+      setJet(jet)
+    }
+    return
+  }
+
+  if (jet.statut === 'resolu') {
+    if (dernierJetResoluId !== jet.id) {
+      dernierJetResoluId = jet.id
       setJet(jet)
       setTimeout(() => setJet(null), 5000)
-    } else if (jet.statut === 'en_attente') {
-      setJet(jet)
     }
   }
 }
-
 export async function updatePersonnage(id, changes) {
   setState(s => ({ ...s, personnages: s.personnages.map(p => p.id === id ? { ...p, ...changes } : p) }))
   if (!supabase) return
@@ -169,6 +174,24 @@ export async function retirerCompetenceCustom(personnageId, nomCompetence) {
   // Nettoyer aussi competences_barrees si la compétence retirée y était
   const barrees = (personnage.competences_barrees || []).filter(n => n !== nomCompetence)
   await updatePersonnage(personnageId, { competences_barrees: barrees })
+}
+
+// MJ : lancer un dé libre (pas lié à un joueur ni une stat), résultat immédiat pour tous
+export async function lancerDeLibre(faces) {
+  const valeur = Math.floor(Math.random() * faces) + 1
+  if (!supabase) return valeur
+  // Supprimer l'ancien jet en attente s'il existe
+  await supabase.from('jets_de_des').delete().eq('statut', 'en_attente')
+  const { error } = await supabase.from('jets_de_des').insert([{
+    personnage_id: null,
+    stat: null,
+    palier: null,
+    faces,
+    valeur,
+    statut: 'resolu',
+  }])
+  if (error) console.error('Erreur lancerDeLibre:', error)
+  return valeur
 }
 
 // MJ : demander un jet
